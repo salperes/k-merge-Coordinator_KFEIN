@@ -1,0 +1,17 @@
+COORDINATOR_HW_VERSION             = 1
+COORDINATOR_SW_VERSION_MAJOR       = 0
+COORDINATOR_SW_VERSION_MINOR       = 5
+COORDINATOR_SERIAL                 = 1
+COORDINATOR_RADIO_TX_POWER         = 13
+COORDINATOR_FREQ                   = 436
+COORDINATOR_ADDRESS                = 0
+NETWORK_ID                         = 174
+WPS_LOST_CYCLE                     = 3
+MAX_WPS_NUMBER                     = 40
+INSTALLED_WPS_COUNT                = 0
+MQTT_SERVER                        = 78.187.41.206
+MQTT_PORT                          = 1883
+SECRET                             = 38013!
+MQTT_PASSWORD                      = Ankara12
+MQTT_USERNAME                      = wpsdevices
+MQTT_TOPIC                         = coordinator
