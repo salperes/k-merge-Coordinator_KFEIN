@@ -15,10 +15,11 @@
 #define def_MQTT_PASSWORD "Alp2013er"
 #define def_MQTT_USERNAME "wpsdevices"
 #define def_MQTT_TOPIC "coordinator"
+#define def_MQTT_PORT 1883
 
 #define BASE_FREQ433 433.15
 #define BASE_FREQ865 865.20
-#define BASE_CHANNEL 0;
+#define BASE_CHANNEL 0
 
 // -----------------------------  WPS  DEFAULTS --------------------
 #define def_WPS_ADDRESS 60

@@ -149,7 +149,7 @@ struct sCoordData
 #pragma pack(1)
 struct sMQTTPreamble
 {
-	
+
 	uint8_t	MessageType;						// 00 - PACKET TYPE
 	uint32_t Serial;
 
@@ -184,7 +184,7 @@ struct sMQTTCoordinatorConfig
 	uint8_t max_wps;					// 15 - MAX WPS
 	uint8_t wps_lost_cycle;			// 16 - WPS LOST CYCLE
 	uint8_t LORAChannel;
-	
+
 	uint8_t lost_wps_count;			// 21 - LOST WPS COUNT
 	uint8_t registered_wps;			// 22 - REGISTERED WPS COUNT
 	uint32_t IPaddress;
@@ -308,7 +308,7 @@ sLORAcomm LORAcomm[255];
 	uint8_t nWPS_GAIN;
 	uint8_t nWPS_MAG_OMXY;
 	uint8_t nWPS_MAG_OMZ;
-	
+
 	uint8_t nWPS_VECTOR_VARIANCE_LIMIT;
 	uint8_t nWPS_MIN_VARIANCE;
 
@@ -380,7 +380,7 @@ void SPI_setup(); // SPI setup işlemleri
 void RF95_setup(uint8_t RadioPower, uint8_t Coordinator_Address, uint8_t Network_ID, float RFFrequency); //Radyo setup işlemleri
 bool SendToWPS(uint8_t LORAWPSindex); // WPS üzerine veri yollama fonksiyonu
 void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, uint8_t id, uint8_t flags, int16_t Rssi, uint8_t checksum, uint8_t checksumreceived); // debug print
-void PrepareDataToWPS(uint8_t LORAWPSindex, uint8_t flagtype,int16_t Rssi); // WPS'e yollanacak verileri hazırlama fonksiyonu
+void PrepareDataToWPS(uint8_t LORAWPSindex, uint8_t flagtype, int16_t Rssi); // WPS'e yollanacak verileri hazırlama fonksiyonu
 bool PrepareCoordinator(); // Program çalıştırıldığında coordinator.conf dosyası okuma ve yazma
 bool ReadCoordinatorConfig(); //coordinator.conf read için
 bool WriteConfig(); //coordinator.conf write için... config değiştiğinde tüm dosyayı yeniden oluşturacak
@@ -430,7 +430,7 @@ int main(int argc, const char* argv[])
 	char stringnumber[6];
 	int_to_str(coordinator.serial, stringnumber, 1, 16);
 
-	for (int i = 0; i< 6; i++)
+	for (int i = 0; i < 6; i++)
 	{
 		client_id[11 - i] = stringnumber[5 - i];
 	}
@@ -502,7 +502,7 @@ int main(int argc, const char* argv[])
 
 uint16_t readvoltage()
 {
-	
+
 	int fd;
 	int ads_address = 0x48;
 	uint8_t buf[10];
@@ -665,7 +665,7 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 	}
 
 	char MQTTMsg[MQTTMsgLen];
-	
+
 
 	// MQTT MESSAGE PREAMBLE
 	MQTTMsg[0] = (uint8_t)MessageType;						// 00 - PACKET TYPE
@@ -729,17 +729,17 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 		MQTTMsg[13] = (uint8_t)coordinator.SWversion_Minor;									// 13 - COORDINATOR SW_VERSION MINOR
 		MQTTMsg[14] = (uint8_t)coordinator.HWversion;										// 14 - COORDINATOR HW_VERSION
 		MQTTMsg[15] = (uint8_t)LORAcomm[index].coordinatordata.rssi;						// 15 - COORDINATOR RSSI ---- DÜZELTİP YOLLA.
-		
+
 		MQTTMsg[16] = (uint8_t)LORAcomm[index].wpsdata.nw_id;								// 16 - WPS NW ID
 		MQTTMsg[17] = (uint8_t)LORAcomm[index].WPSAddress;									// 17 - WPS ADDRESS
 		MQTTMsg[18] = (uint8_t)LORAcomm[index].wpsdata.sequence3;							// 18 - WPS Sequence 3rd Octet
 		MQTTMsg[19] = (uint8_t)LORAcomm[index].wpsdata.sequence2;							// 19 - WPS Sequence 2nd Octet
 		MQTTMsg[20] = (uint8_t)LORAcomm[index].wpsdata.sequence1;							// 20 - WPS Sequence 1st Octet
 
-		MQTTMsg[21] = (uint8_t)(LORAcomm[index].wpsdata.temp>>8);							// 21 - WPS SENSOR TEMP MSB
+		MQTTMsg[21] = (uint8_t)(LORAcomm[index].wpsdata.temp >> 8);							// 21 - WPS SENSOR TEMP MSB
 		MQTTMsg[22] = (uint8_t)LORAcomm[index].wpsdata.temp;								// 22 - WPS SENSOR TEMP LSB
 
-		MQTTMsg[23] = (uint8_t)(LORAcomm[index].wpsdata.serialmsb>>8);						// 23 - WPS Serial 6th Octet
+		MQTTMsg[23] = (uint8_t)(LORAcomm[index].wpsdata.serialmsb >> 8);						// 23 - WPS Serial 6th Octet
 		MQTTMsg[24] = (uint8_t)LORAcomm[index].wpsdata.serialmsb;							// 24 - WPS Serial 5th Octet
 		MQTTMsg[25] = (uint8_t)(LORAcomm[index].wpsdata.serialble >> 24);					// 25 - WPS Serial 4th Octet
 		MQTTMsg[26] = (uint8_t)(LORAcomm[index].wpsdata.serialble >> 16);					// 26 - WPS Serial 3rd Octet
@@ -747,17 +747,17 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 		MQTTMsg[28] = (uint8_t)LORAcomm[index].wpsdata.serialble;							// 28 - WPS Serial 1st Octet
 		MQTTMsg[29] = (uint8_t)(LORAcomm[index].wpsdata.retry_variance & 0b11110000) >> 4;	// 29 - WPS VECTOR VARIANCE
 		MQTTMsg[30] = (uint8_t)(LORAcomm[index].wpsdata.error_vehicle & 0b10000000) >> 7;	// 30 - WPS Vehicle Status
-		
-		MQTTMsg[31] = (uint8_t)(LORAcomm[index].wpsdata.voltage>>8);						// 31 - WPS BATT VALUE MSB
+
+		MQTTMsg[31] = (uint8_t)(LORAcomm[index].wpsdata.voltage >> 8);						// 31 - WPS BATT VALUE MSB
 		MQTTMsg[32] = (uint8_t)LORAcomm[index].wpsdata.voltage;								// 32 - WPS BATT VALUE LSB
-		
+
 
 		MQTTMsg[33] = WPSVoltageLevel(LORAcomm[index].wpsdata.voltage);						// 33 - WPS_BATTERY_LEVEL
-	
+
 		uint16_t temprssi = (-1)*(int16_t)((uint8_t)LORAcomm[index].wpsdata.rssi);
 		MQTTMsg[34] = (uint8_t)(temprssi >> 8);												// 34 - WPS RSSI MSB
 		MQTTMsg[35] = (uint8_t)(temprssi);													// 35 - WPS RSSI LSB
-		
+
 		MQTTMsg[36] = 0;// (uint8_t)(LORAcomm[index].wpsdata.vector >> 24);						// 36 - VECTOR 4th 
 		MQTTMsg[37] = 0;//(uint8_t)(LORAcomm[index].wpsdata.vector >> 16);						// 37 - VECTOR 3rd
 		MQTTMsg[38] = 0;//(uint8_t)(LORAcomm[index].wpsdata.vector >> 8);						// 38 - VECTOR 2nd
@@ -768,9 +768,9 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 		MQTTMsg[42] = (uint8_t)(LORAcomm[index].wpsdata.varlimits >> 3);					// 42 - WPS Vector Variance Limit
 		MQTTMsg[43] = (uint8_t)(LORAcomm[index].wpsdata.vehicledc_sleepc & 0b11000000) >> 6;// 43 - WPS Vehicle Detection Count
 		MQTTMsg[44] = (uint8_t)LORAcomm[index].wpsdata.blepw_radiopw_chkrssi & 0b00011111;	// 44 - WPS Radio TX Power
-		MQTTMsg[45] = (uint8_t)(LORAcomm[index].wpsdata.diffmultp_bleto_gain &0b00001100) >> 2;	// 45 - WPS Sensor Gain
+		MQTTMsg[45] = (uint8_t)(LORAcomm[index].wpsdata.diffmultp_bleto_gain & 0b00001100) >> 2;	// 45 - WPS Sensor Gain
 		MQTTMsg[46] = (uint8_t)(LORAcomm[index].wpsdata.vehicledc_sleepc & 0b00111111); 	// 46 - WPS Sleep Count
-		MQTTMsg[47] = (uint8_t)(LORAcomm[index].wpsdata.blepw_radiopw_chkrssi & 0b01100000)>>5; 	// 47 - BLE TX POWER
+		MQTTMsg[47] = (uint8_t)(LORAcomm[index].wpsdata.blepw_radiopw_chkrssi & 0b01100000) >> 5; 	// 47 - BLE TX POWER
 		MQTTMsg[48] = (uint8_t)LORAcomm[index].wpsdata.lorachannel;							// 48 - LORA CHANNEL 
 		MQTTMsg[49] = (uint8_t)(LORAcomm[index].wpsdata.vector);							// 49 - VECTOR 1st
 		MQTTMsg[50] = (uint8_t)(coordinator.serial >> 16);									// 50 - COORDINATOR SERIAL 3rd OCTET
@@ -780,8 +780,8 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 		MQTTMsg[54] = ((uint8_t)LORAcomm[index].wpsdata.varlimits & 0b00000111);			// 54 - MIN_VARIANCE
 		MQTTMsg[55] = ((uint8_t)LORAcomm[index].wpsdata.blepw_radiopw_chkrssi & 0b10000000) >> 7;	// 55 - CHECK_RSSI
 		MQTTMsg[56] = ((uint8_t)LORAcomm[index].wpsdata.rssilimits & 0b00000111);			// 56 - MIN_RSSI_DIFF
-		MQTTMsg[57] = ((uint8_t)LORAcomm[index].wpsdata.rssilimits & 0b11111000)>>3 ;		// 57 - MAX_RSSI_DIFF
-		MQTTMsg[58] =  ((uint8_t)LORAcomm[index].wpsdata.mag_varordiff & 0b01111111);		// 58 - MAG_FRQ, MAG_OMZ, MAG_OMXY
+		MQTTMsg[57] = ((uint8_t)LORAcomm[index].wpsdata.rssilimits & 0b11111000) >> 3;		// 57 - MAX_RSSI_DIFF
+		MQTTMsg[58] = ((uint8_t)LORAcomm[index].wpsdata.mag_varordiff & 0b01111111);		// 58 - MAG_FRQ, MAG_OMZ, MAG_OMXY
 
 
 
@@ -859,9 +859,9 @@ void LostCheck()
 	unsigned long delta = 0;
 
 	printf(" LOST CHECK FUNCTION....\n");
-	
+
 	for (uint8_t i = 0; i < 256; i++)
-	//newver	for (uint8_t i = 0; i < coordinator.registered_wps; i++)
+		//newver	for (uint8_t i = 0; i < coordinator.registered_wps; i++)
 	{
 		//newver delta = millis() - WPSLostCheckStruct[i].LostTimer;
 		delta = millis() - LORAcomm[i].wpsdata.LostTimer;
@@ -870,7 +870,7 @@ void LostCheck()
 		if (delta > ((SleepCycleFactor * 8000) * sleepcount*(long)(coordinator.wps_lost_cycle)))
 		{
 			//newver if (WPSLostCheckStruct[i].IsLost == 0)
-			if(LORAcomm[i].wpsdata.IsLost==false)
+			if (LORAcomm[i].wpsdata.IsLost == false)
 			{
 				WPSSignalSending--;
 				NUMBER_OF_LOST_WPS++;
@@ -889,8 +889,8 @@ void LostCheck()
 			printf(" WPS Address # %d # is lost...\n", i);
 		}
 
-		if(LORAcomm[i].wpsdata.IsLost==true && LORAcomm[i].wpsdata.WasLost==false)
-		//newver if (WPSLostCheckStruct[i].IsLost > WPSLostCheckStruct[i].WasLost)
+		if (LORAcomm[i].wpsdata.IsLost == true && LORAcomm[i].wpsdata.WasLost == false)
+			//newver if (WPSLostCheckStruct[i].IsLost > WPSLostCheckStruct[i].WasLost)
 		{
 			NewLostCount++;//YENİ LOST WPS VAR
 						   //WPSLostCheckStruct[i].StatusChange = true;
@@ -902,7 +902,7 @@ void LostCheck()
 	}
 	printf("\n");
 
-	if (NewLostCount> 0)
+	if (NewLostCount > 0)
 	{
 		printf("LOST PACKET WILL BE SENT!!!!\n");
 		RWRegisteredWPSCfg('W', 0);
@@ -985,18 +985,18 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 					LORAcomm[wpsaddress].WPSAddress = wpsaddress;
 					LORAcomm[wpsaddress].wpsdata.serialmsb = msbserial;
 					LORAcomm[wpsaddress].wpsdata.serialble = bleserial;
-					LORAcomm[wpsaddress].wpsdata.vehicledc_sleepc = (LORAcomm[i].wpsdata.vehicledc_sleepc&0b11000000) | sleepcount;
+					LORAcomm[wpsaddress].wpsdata.vehicledc_sleepc = (LORAcomm[i].wpsdata.vehicledc_sleepc & 0b11000000) | sleepcount;
 					LORAcomm[wpsaddress].wpsdata.IsLost = islost;
 					LORAcomm[wpsaddress].wpsdata.WasLost = waslost;
 					LORAcomm[wpsaddress].wpsdata.OnRegisteredWPSFile = true;
 					LORAcomm[wpsaddress].wpsdata.SignalSending = false;
 
 
-					
-					printf("%d.	WPS Address =  %d	- WPS Serial = %.4X:%.8X	- WPS SleepCount = %d	- WPS Lost = ",
-						(coordinator.registered_wps + 1),wpsaddress,msbserial,bleserial,sleepcount);
 
-					
+					printf("%d.	WPS Address =  %d	- WPS Serial = %.4X:%.8X	- WPS SleepCount = %d	- WPS Lost = ",
+						(coordinator.registered_wps + 1), wpsaddress, msbserial, bleserial, sleepcount);
+
+
 					if (LORAcomm[wpsaddress].wpsdata.IsLost == 0)
 
 					{
@@ -1008,7 +1008,7 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 						NUMBER_OF_LOST_WPS++;
 					}
 
-				
+
 					LORAcomm[wpsaddress].WPSAddress = wpsaddress;
 					LORAcomm[wpsaddress].FINReceived = false;
 					LORAcomm[wpsaddress].ACTSend = false;
@@ -1022,12 +1022,12 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 	if (ReadWrite == 'A' || ReadWrite == 'a')
 	{
 
-	//newver	for (uint8_t i = 0; i < coordinator.max_wps; i++)
-	//newver	{
-	//newver		if (WPSLostCheckStruct[i].WPSAddress == WPSAddress)  // WPSAddress ile WPSLostCheckStruct.WPSAddress eşitliğine bak
-	//newver		if (WPSLostCheckStruct[i].OnRegisteredWPSFile) return true; // && !WPSLostCheckStruct[i].StatusChange) return true; // dosyada var ve status değişimi yoksa çık..
+		//newver	for (uint8_t i = 0; i < coordinator.max_wps; i++)
+		//newver	{
+		//newver		if (WPSLostCheckStruct[i].WPSAddress == WPSAddress)  // WPSAddress ile WPSLostCheckStruct.WPSAddress eşitliğine bak
+		//newver		if (WPSLostCheckStruct[i].OnRegisteredWPSFile) return true; // && !WPSLostCheckStruct[i].StatusChange) return true; // dosyada var ve status değişimi yoksa çık..
 		if (LORAcomm[WPSAddress].wpsdata.OnRegisteredWPSFile) return true;
-	
+
 		//newver	if (!WPSLostCheckStruct[i].OnRegisteredWPSFile) // dosya içerisinde yoksa dosyaya ekle...
 		//newver		{
 		fstream wpsfile;
@@ -1036,40 +1036,40 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 		wpsfile.open("registeredwps.conf", ios::out | ios::app);
 		wpsfile << "# ";
 
-						//newver int_to_str(WPSLostCheckStruct[i].WPSAddress, buffer, 0, 10);
+		//newver int_to_str(WPSLostCheckStruct[i].WPSAddress, buffer, 0, 10);
 		int_to_str(LORAcomm[WPSAddress].WPSAddress, buffer, 0, 10);
 		wpsfile << buffer << " ";
-		
-						//newver int_to_str(WPSLostCheckStruct[i].serialmsb, buffer, 0, 10);
+
+		//newver int_to_str(WPSLostCheckStruct[i].serialmsb, buffer, 0, 10);
 		int_to_str(LORAcomm[WPSAddress].wpsdata.serialmsb, buffer, 0, 10);
 
 		wpsfile << buffer << " ";
-						//newver int_to_str(WPSLostCheckStruct[i].seriallsb, buffer, 0, 10);
+		//newver int_to_str(WPSLostCheckStruct[i].seriallsb, buffer, 0, 10);
 		int_to_str(LORAcomm[WPSAddress].wpsdata.serialble, buffer, 0, 10);
 		wpsfile << buffer << " ";
 
-						//newver int_to_str(WPSLostCheckStruct[i].SleepCount, buffer, 0, 10);
-		int_to_str((LORAcomm[WPSAddress].wpsdata.vehicledc_sleepc&0b00111111), buffer, 0, 10);
+		//newver int_to_str(WPSLostCheckStruct[i].SleepCount, buffer, 0, 10);
+		int_to_str((LORAcomm[WPSAddress].wpsdata.vehicledc_sleepc & 0b00111111), buffer, 0, 10);
 		wpsfile << buffer << " ";
-						
-						//newver int_to_str(WPSLostCheckStruct[i].IsLost, buffer, 0, 10);
+
+		//newver int_to_str(WPSLostCheckStruct[i].IsLost, buffer, 0, 10);
 		int_to_str(LORAcomm[WPSAddress].wpsdata.IsLost, buffer, 0, 10);
 		wpsfile << buffer << " ";
 
-						//newver int_to_str(WPSLostCheckStruct[i].WasLost, buffer, 0, 10);
+		//newver int_to_str(WPSLostCheckStruct[i].WasLost, buffer, 0, 10);
 		int_to_str(LORAcomm[WPSAddress].wpsdata.WasLost, buffer, 0, 10);
 		wpsfile << buffer << " " << endl;
 
 		wpsfile.close();
-						//newver WPSLostCheckStruct[i].OnRegisteredWPSFile = true;
+		//newver WPSLostCheckStruct[i].OnRegisteredWPSFile = true;
 		LORAcomm[WPSAddress].wpsdata.OnRegisteredWPSFile = true;
 
-						//WPSLostCheckStruct[i].StatusChange = false;
+		//WPSLostCheckStruct[i].StatusChange = false;
 		coordinator.registered_wps++;
 		return true;
-	//newver				}
-	//newver			}
-	//newver	}
+		//newver				}
+		//newver			}
+		//newver	}
 	}
 
 	// WRITE FILE (ONLY AFTER LOST, FOUND, WPS TRANSFERED/REMOVED OR STATUS CHANGED
@@ -1097,7 +1097,7 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 			wpsfile << buffer << " ";
 
 			//newver int_to_str(WPSLostCheckStruct[i].SleepCount, buffer, 0, 10);
-			int_to_str((LORAcomm[i].wpsdata.vehicledc_sleepc&0b00111111), buffer, 0, 10);
+			int_to_str((LORAcomm[i].wpsdata.vehicledc_sleepc & 0b00111111), buffer, 0, 10);
 			wpsfile << buffer << " ";
 
 			//newver int_to_str(WPSLostCheckStruct[i].IsLost, buffer, 0, 10);
@@ -1185,14 +1185,14 @@ bool ReadCoordinatorConfig()
 			if (string(token[i]) == "COORDINATOR_CHANNEL")
 			{
 				//printf(token[i + 2]);
-				uint8_t chnl= (uint8_t)(atoi(token[i + 2], 0);
+				uint8_t chnl = (uint8_t)(atoi(token[i + 2]));
 				if (chnl < 64)
 				{
-					coordinator.frq=(BASE_FREQ433 + ((float)chnl)*0.2);
+					coordinator.frq = (BASE_FREQ433 + ((float)chnl)*0.2);
 				}
 				else
 				{
-					coordinator.frq=(BASE_FREQ865 + ((float)(64 - chnl))*0.3);
+					coordinator.frq = (BASE_FREQ865 + ((float)(64 - chnl))*0.3);
 				}
 
 				//newver coordinator.frq = strtof(token[i + 2], 0);
@@ -1309,10 +1309,13 @@ bool PrepareCoordinator()
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		file << "COORDINATOR_RADIO_TX_POWER         = " << COORDINATOR_RADIO_TX_POWER << endl;
-		file << "COORDINATOR_FREQ                   = " << DEFAULT_FREQ << endl;
+
+		int_to_str(BASE_CHANNEL, stringnumber, 0, 10);
+		file << "COORDINATOR_CHANNEL                = " << stringnumber << endl;
 
 		int_to_str(coordinator.address, stringnumber, 0, 10);
 		file << "COORDINATOR_ADDRESS                = " << stringnumber << endl;
+
 
 		file << "NETWORK_ID                         = " << def_NETWORK_ID << endl;
 
@@ -1323,7 +1326,9 @@ bool PrepareCoordinator()
 		int_to_str(coordinator.registered_wps, stringnumber, 0, 10);
 		file << "REGISTERED_WPS_COUNT               = " << stringnumber << endl;
 		file << "MQTT_SERVER                        = " << TESTSERVER << endl;
-		file << "MQTT_PORT                          = " << TESTPORT << endl;
+
+		int_to_str(def_MQTT_PORT, stringnumber, 0, 10);
+		file << "MQTT_PORT                          = " << stringnumber << endl;
 
 		file << "SECRET                             = " << def_SECRET_CODE << endl;
 
@@ -1357,7 +1362,7 @@ bool LORARead()
 	int16_t Rssi = driver.lastRssi();
 	uint8_t LORAWPSindex = 0;
 
-	
+
 	////////////////////////////////////////////////////////////////////////////////////
 	//						GET DATA FROM WPS STEP #1
 	////////////////////////////////////////////////////////////////////////////////////
@@ -1377,7 +1382,7 @@ bool LORARead()
 		case FLAG_INTER: { printf(" Packet Type    = Interrim Packet\n"); break; }
 		case FLAG_CONFIGURATION_SET: { printf(" Packet Type    = Configuration Has Been Set\n"); break; }
 		case FLAG_FIN: { printf(" Packet Type    = FIN\n"); break; }
-		case FLAG_PING: { printf(" Packet Type    = Ping Packet\n");break; }
+		case FLAG_PING: { printf(" Packet Type    = Ping Packet\n"); break; }
 		}
 
 		//newver if (data_from_wps_temp[0] != coordinator.NW_id)
@@ -1391,7 +1396,7 @@ bool LORARead()
 		////////////////////////////////////////////////////////////////////////////////////
 		//						IF PING PACKET KEEP IT SHORT :-)
 		////////////////////////////////////////////////////////////////////////////////////
-		 
+
 		//newver if (data_from_wps_temp[1] == FLAG_PING)
 		if (wpsdata.flagtype == FLAG_PING)
 		{
@@ -1409,7 +1414,7 @@ bool LORARead()
 			//Serial.println("Wait Sending\n");
 			driver.waitPacketSent();
 			//Serial.println("Set to RX\n");
-			LORAcomm[from].wpsdata.rssi = (uint8_t)(-1 * driver.lastrssi());
+			LORAcomm[from].wpsdata.rssi = (uint8_t)(-1 * driver.lastRssi());
 			return true;
 		}
 
@@ -1453,18 +1458,18 @@ bool LORARead()
 				//Serial.println("Set to RX\n");
 				return true;
 			}
-							
+
 			LORAcomm[from].wpsdata = wpsdata;
 			LORAcomm[from].WPSAddress = from;
 			LORAcomm[from].ACTSend = false;
-			
-			
+
+
 			uint32_t sequence; sequence = (uint32_t)data_from_wps_temp[2] * 256 * 256 + (uint16_t)data_from_wps_temp[3] * 256 + data_from_wps_temp[4];
-			
+
 			///////////////////////////////////////////////////////////////
 			// CHECKSUM OK İSE ACK_OK PAKETDİ YOLLA....
 			///////////////////////////////////////////////////////////////
-			
+
 			printf(" Checksum OK. Sending ACK Packet\n");
 			printf("-------------------------------------------\n");
 			//PrepareDataToWPS(LORAWPSindex, FLAG_ACK_OK,Rssi);
@@ -1480,7 +1485,7 @@ bool LORARead()
 			{
 				PrepareDataToWPS(from, FLAG_ACK_OK, Rssi);
 			}
-			
+
 
 
 			// ACK_OK VEYA CHG_RQ PAKEDİ YOLLA SONUCUNU ACTSend içerisine yaz...
@@ -1495,7 +1500,7 @@ bool LORARead()
 		//						  HABERLEŞME SONA ERİYOR
 		//						  MQTT VERİSİ YOLLANIYOR
 		////////////////////////////////////////////////////////////////////////////////////
-		else if (wpsdata.flagtype==FLAG_CONFIGURATION_SET || wpsdata.flagtype==FLAG_FIN)
+		else if (wpsdata.flagtype == FLAG_CONFIGURATION_SET || wpsdata.flagtype == FLAG_FIN)
 		{
 			if (wpsdata.flagtype == FLAG_CONFIGURATION_SET) printf(" CFG_APPLIED Packet Received from WPS address : %d\n", from);
 			if (wpsdata.flagtype == FLAG_FIN) printf(" FIN Packet Received from WPS address : %d\n", from);
@@ -1521,12 +1526,12 @@ bool LORARead()
 				//Serial.println("Set to RX\n");
 				return true;
 			}
-			   			 		
+
 			LORAcomm[from].ACTSend = false;
 			LORAcomm[from].FINReceived = true;
 			LORAcomm[from].MQTTmsgSend = false;
 
-			if (LORAcomm[from].wpsdata.flagtype== FLAG_PERIODICAL)
+			if (LORAcomm[from].wpsdata.flagtype == FLAG_PERIODICAL)
 			{
 				cout << "Periodical Packet Will Be Sent.." << endl;
 				SendMessageMQTT(from, MSG_PERIODICAL);
@@ -1544,10 +1549,10 @@ bool LORARead()
 				mosquitto_lib_cleanup();
 			}
 
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//								YENİ LOST RESET İŞLEMİ
-		//								
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////
+			//								YENİ LOST RESET İŞLEMİ
+			//								
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////
 			if (LORAcomm[from].WPSAddress == from)
 			{
 				if (LORAcomm[from].wpsdata.IsLost)
@@ -1602,8 +1607,8 @@ bool LORARead()
 		printf("-------------------------------------------\n");
 		return false;
 	}
-		
-//EndOfStory:
+
+	//EndOfStory:
 	printf("\n");
 	return true;
 }
@@ -1652,7 +1657,7 @@ bool LORARead()
 
 void PrepareDataToWPS(uint8_t LORAWPSindex, uint8_t flagtype, int16_t Rssi)
 {
-	
+
 	uint8_t WPSADDRESS = LORAWPSindex;
 
 	//.changerq
@@ -1667,45 +1672,45 @@ void PrepareDataToWPS(uint8_t LORAWPSindex, uint8_t flagtype, int16_t Rssi)
 	uint8_t blepower = 2;
 	uint8_t vdcount = 1;
 	uint8_t bletimeout = 2;
-	
+
 	uint8_t variancebase = 3;
 	uint8_t variancelimit = 5;
-	
+
 	uint8_t checkrssi = 0;
 	uint8_t minrssidiff = 2;
 	uint8_t maxrssidiff = 5;
 
 	uint8_t sleepcount = 45;
-	
+
 	uint8_t maggain = 0;
 	uint8_t magfrq = 3;
 	uint8_t magomxy = 0;
 	uint8_t magomz = 0;
-	
+
 	uint8_t newcoordaddr = 0;
 	uint8_t lorachannel = 0;
 	uint8_t newwpsaddr = WPSADDRESS;
 	uint8_t newnwid = coordinator.NW_id;
 
-	uint8_t varianceordiff = 0; 
+	uint8_t varianceordiff = 0;
 	uint8_t diffmultip = 0;
-		
+
 	LORAcomm[LORAWPSindex].coordinatordata.nw_id = coordinator.NW_id;
 	LORAcomm[LORAWPSindex].coordinatordata.flagtype = flagtype; // PAKET TİPİ
-	
+
 	//						0 = No change
 	//						BIT 0 = 1 = Reset VECTOR0  (Bit 0)
 	//						BIT 1 = 2 = Reset WPS SOFTWARE (Bit 1)
 	//						BIT 2 = 4 = CHANGE REQUEST
 	//						BIT 3 = 8 = InitialState=STATE_BUSY
 	//						BIT 4 = 16=	Change WPS address (0), Change NW_ID (1)
-	LORAcomm[LORAWPSindex].coordinatordata.changerq = 0;	
+	LORAcomm[LORAWPSindex].coordinatordata.changerq = 0;
 
 	// WPS ÜZERİNDEN ALINAN SİNYAL Rssi
-	LORAcomm[LORAWPSindex].coordinatordata.rssi= (uint8_t)(-1*Rssi);				
-	
+	LORAcomm[LORAWPSindex].coordinatordata.rssi = (uint8_t)(-1 * Rssi);
+
 	//hangi parametreler değişecek?
-	LORAcomm[LORAWPSindex].coordinatordata.changeflag = 0;					
+	LORAcomm[LORAWPSindex].coordinatordata.changeflag = 0;
 	//						BIT 0	1-	MAG Z,XY,FRQ,VarOrDiff
 	//						BIT 1	2-	Vector Variance Limits
 	//						BIT 2	4-	RSSI Diff limits
@@ -1758,8 +1763,8 @@ bool SendToWPS(uint8_t LORAWPSindex)
 	//newver driver.send(LORAcomm[LORAWPSindex].data_to_wps, sizeof(LORAcomm[LORAWPSindex].data_to_wps));
 	driver.send((uint8_t*)&tempcoorddata, sizeof(tempcoorddata));
 	//Serial.println("Wait Sending\n");
-	sendstatus=driver.waitPacketSent();
-	
+	sendstatus = driver.waitPacketSent();
+
 	driver.setModeRx();
 	switch (tempcoorddata.flagtype)
 	{
@@ -1879,7 +1884,7 @@ void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, u
 
 	uint8_t wpsswmaj = (LORAcomm[from].wpsdata.versions >> 8) & 0b00001111;
 	uint8_t wpsswmin = (uint8_t)LORAcomm[from].wpsdata.versions & 0b00111111;
-	printf(" WPS Software Version: %d.d", wpsswmaj,wpsswmin);
+	printf(" WPS Software Version: %d.d", wpsswmaj, wpsswmin);
 
 	printf(" WPS Sequence Number : %d\n", (uint32_t)(LORAcomm[from].wpsdata.sequence3 * 256 * 256 + LORAcomm[from].wpsdata.sequence2 * 256 + LORAcomm[from].wpsdata.sequence1));
 
@@ -1889,7 +1894,7 @@ void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, u
 	if (((LORAcomm[printindex].wpsdata.mag_varordiff & 0b10000000) >> 7) == DIFFCHK)
 	{
 		printf("Diff. Check\n");
-		uint8_t multiplier = ((LORAcomm[from].wpsdata.diffmultp_bleto_gain & 0b00000011) + 1)*10;
+		uint8_t multiplier = ((LORAcomm[from].wpsdata.diffmultp_bleto_gain & 0b00000011) + 1) * 10;
 		printf(" WPS Max. Variance L.: (%d %) \n", ((LORAcomm[from].wpsdata.varlimits & 0b11111000) >> 3)*multiplier);
 		printf(" WPS Min. Variance L.: (%d %) \n", (LORAcomm[from].wpsdata.varlimits & 0b00000111)*multiplier);
 	}
@@ -1899,7 +1904,7 @@ void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, u
 		printf(" WPS Max. Variance L.: (%d %) \n", (LORAcomm[from].wpsdata.varlimits & 0b11111000) >> 3);
 		printf(" WPS Min. Variance L.: (%d %) \n", (LORAcomm[from].wpsdata.varlimits & 0b00000111));
 	}
-	
+
 
 	/*float vector;
 	uint8_t *vec_pointer = (uint8_t*)&vector;
@@ -1908,9 +1913,9 @@ void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, u
 		vec_pointer[i] = LORAcomm[printindex].data_from_wps[28 + i];
 	}*/
 	printf(" WPS Vector          : %6.2f \n", LORAcomm[from].wpsdata.vector);
-	
+
 	float temperature = 0;
-	
+
 	int16_t tmp = LORAcomm[from].wpsdata.temp;
 	uint8_t hwtype = LORAcomm[from].wpsdata.temp >> 12;
 
@@ -1923,14 +1928,14 @@ void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, u
 		temperature = (float)tmp / 8;
 	}
 	temperature += 25;
-	printf(" WPS Sensor Temp.    : %3.2f C\n", temperature); 
+	printf(" WPS Sensor Temp.    : %3.2f C\n", temperature);
 	uint8_t MAG_FRQ = (LORAcomm[from].wpsdata.mag_varordiff & 0b01110000) >> 4;
 	uint8_t MAG_OMXY = (LORAcomm[from].wpsdata.mag_varordiff & 0b00001100) >> 2;
 	uint8_t MAG_OMZ = (LORAcomm[from].wpsdata.mag_varordiff & 0b00000011);
 	uint8_t MAG_GAIN = (LORAcomm[from].wpsdata.diffmultp_bleto_gain & 0b11110011) >> 2;
-	
+
 	printf(" WPS Sensor Gain     : %d (", MAG_GAIN);
-	switch (MAG_GAIN) 
+	switch (MAG_GAIN)
 	{
 	case 0: {printf("4 Gauss)\n"); break; }
 	case 1: {printf("8 Gauss)\n"); break; }
@@ -1974,21 +1979,21 @@ void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, u
 	}
 
 	printf(" Battery Level       : %d % \n", WPSVoltageLevel(LORAcomm[from].wpsdata.voltage));
-	printf(" Battery Voltage     : %3.2f V \n", ((float)(WPSVoltageLevel(LORAcomm[from].wpsdata.voltage*3.3 * 2 / 1024)));
+	printf(" Battery Voltage     : %3.2f V \n", ((float)(WPSVoltageLevel(LORAcomm[from].wpsdata.voltage*3.3 * 2 / 1024))));
 	printf(" Vehicle Detected    : "); if ((LORAcomm[from].wpsdata.error_vehicle & 0b10000000) >> 7) { printf("True\n"); }
 	else { printf("False\n"); }
-	
+
 	printf(" RADIO_RSSI WPS SIDE : -%d dB\n", LORAcomm[from].wpsdata.rssi);
 	printf(" RADIO_RSSI_COR SIDE : %d dB\n", Rssi);
-	printf(" MIN/MAX_RSSI_DIFF   : %d - %d dB \n", (LORAcomm[from].wpsdata.rssilimits&0b00000111), (LORAcomm[from].wpsdata.rssilimits >>3 ));
+	printf(" MIN/MAX_RSSI_DIFF   : %d - %d dB \n", (LORAcomm[from].wpsdata.rssilimits & 0b00000111), (LORAcomm[from].wpsdata.rssilimits >> 3));
 	printf(" CHECK_RSSI          : ");
-	if ((LORAcomm[from].wpsdata.blepw_radiopw_chkrssi & 0b10000000)>>7)
+	if ((LORAcomm[from].wpsdata.blepw_radiopw_chkrssi & 0b10000000) >> 7)
 	{
 		printf("True\n");
 	}
 	else
 	{
-		printf("False\n"); 
+		printf("False\n");
 	}
 	printf(" WPS HW Version      : %d (", hwtype);
 	switch (hwtype)
@@ -2001,13 +2006,13 @@ void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, u
 	case 6: {printf("328P+LSM303C+HM10)\n"); break; }
 	default: {printf("HW NOT IDENTIFIED)\n"); break; }
 	}
-	printf(" WPS Error Code      : %d \n", LORAcomm[from].wpsdata.error_vehicle&0b01111111);
-	
-	
+	printf(" WPS Error Code      : %d \n", LORAcomm[from].wpsdata.error_vehicle & 0b01111111);
+
+
 	uint8_t bletimeout = (LORAcomm[from].wpsdata.diffmultp_bleto_gain & 0b11110000) >> 4;
 	printf(" BLE TIMEOUT         : %1.2f mins\n", (float)bletimeout / 2);
-	
-	uint8_t bletxpower = (LORAcomm[from].wpsdata.blepw_radiopw_chkrssi & 0b01100000)>>5;
+
+	uint8_t bletxpower = (LORAcomm[from].wpsdata.blepw_radiopw_chkrssi & 0b01100000) >> 5;
 	printf(" BLE TX POWER        : %d (", bletxpower);
 	switch (bletxpower)
 	{
@@ -2016,11 +2021,11 @@ void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, u
 	case 2: printf("0 dBm)\n"); break;
 	case 3: printf("6 dBm)\n"); break;
 	}
-	
-	printf(" WPS Retry Count     : %d \n", (LORAcomm[from].wpsdata.retry_variance & 0b00001111));
-	printf(" WPS Vehicle Det. Cnt: %d \n", (LORAcomm[from].wpsdata.vehicledc_sleepc & 0b11000000)>>6);
 
-	
+	printf(" WPS Retry Count     : %d \n", (LORAcomm[from].wpsdata.retry_variance & 0b00001111));
+	printf(" WPS Vehicle Det. Cnt: %d \n", (LORAcomm[from].wpsdata.vehicledc_sleepc & 0b11000000) >> 6);
+
+
 
 	uint16_t val = readvoltage();
 	printf(" Coordinator Battery : %3.2f V\n", (float)val*23.48 / 32768);
@@ -2056,15 +2061,15 @@ char* datetime_f(char dates[])
 
 
 	int i = 0;
-	for (i = 0; i<4; i++) datestring[i] = sYear[i];
+	for (i = 0; i < 4; i++) datestring[i] = sYear[i];
 	datestring[i] = '-';
-	for (i = 5; i<7; i++) datestring[i] = sMon[i - 5];
+	for (i = 5; i < 7; i++) datestring[i] = sMon[i - 5];
 	datestring[i] = '-';
-	for (i = 8; i<10; i++) datestring[i] = sDay[i - 8];
+	for (i = 8; i < 10; i++) datestring[i] = sDay[i - 8];
 	datestring[i] = ' ';
-	for (i = 11; i<13; i++) datestring[i] = sHour[i - 11];
+	for (i = 11; i < 13; i++) datestring[i] = sHour[i - 11];
 	datestring[i] = ':';
-	for (i = 14; i<16; i++) datestring[i] = sMin[i - 14];
+	for (i = 14; i < 16; i++) datestring[i] = sMin[i - 14];
 	datestring[i] = ':';
 	datestring[17] = sSec[0];
 	datestring[18] = sSec[1];
@@ -2283,7 +2288,7 @@ void FindIPAddress()
 uint32_t hex2dec(const char*s, int length)
 {
 	uint32_t n = 0;
-	for (int i = 0, v = 0; i<length && s[i] != '\0'; i++)
+	for (int i = 0, v = 0; i < length && s[i] != '\0'; i++)
 	{
 		//int v;
 		if ('a' <= s[i] && s[i] <= 'f') { v = s[i] - 97 + 10; }
