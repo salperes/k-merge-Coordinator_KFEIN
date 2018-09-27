@@ -110,17 +110,6 @@ struct sWPSData
 	uint8_t diffmultp_bleto_gain;
 	uint8_t checksum;
 
-	// CHECKSUM FUNCTION
-	uint8_t selfChecksum() 
-	{
-		uint8_t *p = (uint8_t)this;
-		uint8_t s = 0;
-		for (int i = 0; i < (int)sizeof(sWPSData); ++i) {
-			s ^= p[i];
-		}
-		return s;
-	}
-
 	// LOST CHECK VARIABLES
 	bool IsLost;
 	bool WasLost;
@@ -769,9 +758,9 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 		MQTTMsg[34] = (uint8_t)(temprssi >> 8);												// 34 - WPS RSSI MSB
 		MQTTMsg[35] = (uint8_t)(temprssi);													// 35 - WPS RSSI LSB
 		
-		MQTTMsg[36] = (uint8_t)(LORAcomm[index].wpsdata.vector >> 24);						// 36 - VECTOR 4th 
-		MQTTMsg[37] = (uint8_t)(LORAcomm[index].wpsdata.vector >> 16);						// 37 - VECTOR 3rd
-		MQTTMsg[38] = (uint8_t)(LORAcomm[index].wpsdata.vector >> 8);						// 38 - VECTOR 2nd
+		MQTTMsg[36] = 0;// (uint8_t)(LORAcomm[index].wpsdata.vector >> 24);						// 36 - VECTOR 4th 
+		MQTTMsg[37] = 0;//(uint8_t)(LORAcomm[index].wpsdata.vector >> 16);						// 37 - VECTOR 3rd
+		MQTTMsg[38] = 0;//(uint8_t)(LORAcomm[index].wpsdata.vector >> 8);						// 38 - VECTOR 2nd
 
 		MQTTMsg[39] = (uint8_t)(LORAcomm[index].wpsdata.versions >> 12);					// 39 - WPS HW Version
 		MQTTMsg[40] = (uint8_t)(LORAcomm[index].wpsdata.versions >> 8) & 0b00001111;		// 40 - WPS SW Version Major
@@ -847,25 +836,6 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 
 void WPSLostCheckINIT(uint8_t wpscount)
 {
-	for (uint8_t i = 0; i<wpscount; i++)
-	{
-		WPSLostCheckStruct[i].LostTimer = 1000;
-		WPSLostCheckStruct[i].SleepCount = def_WPS_SLEEP_COUNT;
-		WPSLostCheckStruct[i].IsLost = 0;
-		WPSLostCheckStruct[i].WasLost = 0;
-		WPSLostCheckStruct[i].WPSAddress = 0;
-		WPSLostCheckStruct[i].WPSSerial = 0;
-		WPSLostCheckStruct[i].serialmsb = 0;
-		WPSLostCheckStruct[i].seriallsb = 0;
-		WPSLostCheckStruct[i].SignalSend = false;
-		WPSLostCheckStruct[i].OnRegisteredWPSFile = false;
-		// ALTTAKİ SATIRLAR LORAComm init işlemleri için
-		LORAcomm[i].WPSAddress = 0;
-		LORAcomm[i].ACTSend = false;
-		LORAcomm[i].FINReceived = false;
-		LORAcomm[i].MQTTmsgSend = false;
-	}
-
 	for (uint8_t i = 0; i < 256; i++)
 	{
 		LORAcomm[i].wpsdata.LostTimer = 1000;
@@ -916,7 +886,7 @@ void LostCheck()
 				mosquitto_lib_cleanup();
 			}
 
-			printf(" WPS Address # %d # is lost...\n", WPSLostCheckStruct[i].WPSAddress);
+			printf(" WPS Address # %d # is lost...\n", i);
 		}
 
 		if(LORAcomm[i].wpsdata.IsLost==true && LORAcomm[i].wpsdata.WasLost==false)
@@ -1003,32 +973,14 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 				{
 
 					uint8_t wpsaddress = atoi(token[1]);
-				//newver	uint32_t msbserial = atoi(token[2]);
-				//newver	uint32_t lsbserial = atoi(token[3]);
+
 					uint16_t msbserial = atoi(token[2]);
 					uint32_t bleserial = atoi(token[3]);
 					uint8_t sleepcount = (uint8_t)atoi(token[4]);
 					uint8_t islost = (uint8_t)atoi(token[5]);
 					uint8_t waslost = (uint8_t)atoi(token[6]);
-					uint64_t wpsserial = (uint64_t)msbserial << 24 | lsbserial;
-					/*printf("1. %d\n", wpsaddress);
-					printf("2. %.6x\n", msbserial);
-					printf("3. %.6x\n", lsbserial);
-					printf("4. %d\n", sleepcount);
-					printf("5. %s\n", islost);
-					printf("6. %s\n", waslost);*/
+					uint64_t wpsserial = (uint64_t)msbserial << 24 | bleserial;
 
-					/*newver 
-					WPSLostCheckStruct[coordinator.registered_wps].WPSAddress = wpsaddress;
-					WPSLostCheckStruct[coordinator.registered_wps].serialmsb = msbserial;
-					WPSLostCheckStruct[coordinator.registered_wps].seriallsb = lsbserial;
-					WPSLostCheckStruct[coordinator.registered_wps].WPSSerial = wpsserial;
-					WPSLostCheckStruct[coordinator.registered_wps].SleepCount = sleepcount;
-					WPSLostCheckStruct[coordinator.registered_wps].IsLost = islost;
-					WPSLostCheckStruct[coordinator.registered_wps].WasLost = waslost;
-					WPSLostCheckStruct[coordinator.registered_wps].OnRegisteredWPSFile = true;
-					WPSLostCheckStruct[coordinator.registered_wps].SignalSend = false;
-					*/
 					LORAcomm[wpsaddress].wpsdata.WPSSerial = (uint64_t)msbserial << 24 | bleserial;
 					LORAcomm[wpsaddress].WPSAddress = wpsaddress;
 					LORAcomm[wpsaddress].wpsdata.serialmsb = msbserial;
@@ -1040,17 +992,11 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 					LORAcomm[wpsaddress].wpsdata.SignalSending = false;
 
 
-					/*newver
-					printf("%d.	WPS Address =  %d	- WPS Serial = %.6X:%.6X	- WPS SleepCount = %d	- WPS Lost = ",
-						(coordinator.registered_wps + 1),
-						WPSLostCheckStruct[coordinator.registered_wps].WPSAddress,
-						WPSLostCheckStruct[coordinator.registered_wps].serialmsb,
-						WPSLostCheckStruct[coordinator.registered_wps].seriallsb,
-						WPSLostCheckStruct[coordinator.registered_wps].SleepCount);*/
+					
 					printf("%d.	WPS Address =  %d	- WPS Serial = %.4X:%.8X	- WPS SleepCount = %d	- WPS Lost = ",
 						(coordinator.registered_wps + 1),wpsaddress,msbserial,bleserial,sleepcount);
 
-					//newver if (WPSLostCheckStruct[coordinator.registered_wps].IsLost == 0)
+					
 					if (LORAcomm[wpsaddress].wpsdata.IsLost == 0)
 
 					{
@@ -1062,13 +1008,9 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 						NUMBER_OF_LOST_WPS++;
 					}
 
-					/*newver 
-					LORAcomm[coordinator.registered_wps].WPSAddress = WPSLostCheckStruct[coordinator.registered_wps].WPSAddress;
-					LORAcomm[coordinator.registered_wps].FINReceived = false;
-					LORAcomm[coordinator.registered_wps].ACTSend = false;
-					*/
+				
 					LORAcomm[wpsaddress].WPSAddress = wpsaddress;
-					LORAcomm[wpsaddress].FINReceived) = false;
+					LORAcomm[wpsaddress].FINReceived = false;
 					LORAcomm[wpsaddress].ACTSend = false;
 					coordinator.registered_wps++;
 				}
@@ -1243,7 +1185,7 @@ bool ReadCoordinatorConfig()
 			if (string(token[i]) == "COORDINATOR_CHANNEL")
 			{
 				//printf(token[i + 2]);
-				uint8_t chnl= (uint8_t)atoi(token[i + 2], 0);
+				uint8_t chnl= (uint8_t)(atoi(token[i + 2], 0);
 				if (chnl < 64)
 				{
 					coordinator.frq=(BASE_FREQ433 + ((float)chnl)*0.2);
