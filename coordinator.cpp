@@ -491,7 +491,7 @@ int main(int argc, const char* argv[])
 			// Let OS doing other tasks
 			// For timed critical appliation you can reduce or delete
 			// this delay, but this will charge CPU usage, take care and monitor
-			bcm2835_delay(200);
+			bcm2835_delay(500);
 		}
 	}
 
@@ -758,6 +758,14 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 		MQTTMsg[34] = (uint8_t)(temprssi >> 8);												// 34 - WPS RSSI MSB
 		MQTTMsg[35] = (uint8_t)(temprssi);													// 35 - WPS RSSI LSB
 
+
+		/*float vector;
+		uint8_t *vec_pointer = (uint8_t*)&vector;
+		for (uint8_t i = 0; i < sizeof(vector); i++)
+		{
+			vec_pointer[i] = LORAcomm[printindex].data_from_wps[28 + i];
+		}*/
+
 		MQTTMsg[36] = 0;// (uint8_t)(LORAcomm[index].wpsdata.vector >> 24);						// 36 - VECTOR 4th 
 		MQTTMsg[37] = 0;//(uint8_t)(LORAcomm[index].wpsdata.vector >> 16);						// 37 - VECTOR 3rd
 		MQTTMsg[38] = 0;//(uint8_t)(LORAcomm[index].wpsdata.vector >> 8);						// 38 - VECTOR 2nd
@@ -854,6 +862,7 @@ void WPSLostCheckINIT(uint8_t wpscount)
 
 void LostCheck()
 {
+	return;
 	uint8_t NewLostCount = 0;
 	uint8_t NewFoundCount = 0;
 	unsigned long delta = 0;
@@ -863,6 +872,7 @@ void LostCheck()
 	for (uint8_t i = 0; i < 256; i++)
 		//newver	for (uint8_t i = 0; i < coordinator.registered_wps; i++)
 	{
+		if (LORAcomm[i].WPSAddress == 0) continue;
 		//newver delta = millis() - WPSLostCheckStruct[i].LostTimer;
 		delta = millis() - LORAcomm[i].wpsdata.LostTimer;
 		long sleepcount = LORAcomm[i].wpsdata.vehicledc_sleepc & 0b00111111;
@@ -1533,7 +1543,7 @@ bool LORARead()
 
 			if (LORAcomm[from].wpsdata.flagtype == FLAG_PERIODICAL)
 			{
-				cout << "Periodical Packet Will Be Sent.." << endl;
+				cout << "Periodical MQTT Packet Will Be Sent.." << endl << endl;
 				SendMessageMQTT(from, MSG_PERIODICAL);
 				mosquitto_disconnect(mosq);
 				mosquitto_destroy(mosq);
@@ -1542,7 +1552,7 @@ bool LORARead()
 
 			if (LORAcomm[from].wpsdata.flagtype == FLAG_VEHICLE_STATUS_CHANGE)
 			{
-				cout << "Vehicle Status Packet Will Be Sent.." << endl;
+				cout << "Vehicle Status MQTT Packet Will Be Sent.." << endl << endl;
 				SendMessageMQTT(from, MSG_VEHICLE_STATUS);
 				mosquitto_disconnect(mosq);
 				mosquitto_destroy(mosq);
@@ -1586,13 +1596,12 @@ bool LORARead()
 			}
 
 			printf(" Live WPS count = %d/%d\n", WPSSignalSending, coordinator.registered_wps);
-			for (uint8_t i = 0; i < (256); i++)
-			{
-				//newver if (WPSLostCheckStruct[i].SignalSend && (WPSLostCheckStruct[i].IsLost == 0)) printf(" %d		", WPSLostCheckStruct[i].WPSAddress);
-				if ((LORAcomm[i].wpsdata.SignalSending == false) && (LORAcomm[i].wpsdata.IsLost == 0)) printf(" %d		", i);
-			}
-			cout << endl;
-
+			/*			for (uint8_t i = 0; i < (256); i++)
+						{
+							if ((LORAcomm[i].wpsdata.SignalSending == true) && (LORAcomm[i].wpsdata.IsLost == false)) printf(" %d		", i);
+						}
+						cout << endl;
+			*/
 			// GELEN VERİLERİ EKRANA YAZ
 
 			WPS_DATA_print(from, len, from, to, id, flags, Rssi, checksum, checksumreceived);
@@ -1612,48 +1621,6 @@ bool LORARead()
 	printf("\n");
 	return true;
 }
-
-/*uint8_t LORAPacketIndex(uint8_t from, bool receivedpacket)
-{
-	return from;
-	// FIN PAKEDİ DEĞİL İSE İLK EŞLEŞENİ VEYA 0 OLAN İLK İNDEXİ DÖNECEK...
-	if (receivedpacket)
-	{
-		uint8_t i = 0;
-		for (i = 0; i < coordinator.max_wps; i++)
-		{
-			if (LORAcomm[i].WPSAddress == from)
-			{
-				return i;
-				break;
-			}
-			//DETECTED_WPS++;
-			//return DETECTED_WPS-1;
-
-			if (LORAcomm[i].WPSAddress == 0)
-			{
-				printf("\n NOT PREVIOUSLY SENDING WPS...\n");
-				return i;
-				break;
-
-			}
-
-		}
-	}
-	// FIN PAKETİ İSE DAHA ÖNCEDEN KAYITLI OLMASI GEREKLİ ...
-
-	if (!receivedpacket)
-	{
-		for (uint8_t i = 0; i < coordinator.max_wps; i++)
-		{
-			if (LORAcomm[i].WPSAddress == from)
-			{
-				return i;
-				break;
-			}
-		}
-	}
-}*/
 
 void PrepareDataToWPS(uint8_t LORAWPSindex, uint8_t flagtype, int16_t Rssi)
 {
@@ -1881,10 +1848,11 @@ void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, u
 	serial[5] = LORAcomm[from].wpsdata.serialble;
 
 	printf(" WPS Serial          : %.2X:%.2X:%.2X:%.2X:%.2X:%.2X\n", serial[0], serial[1], serial[2], serial[3], serial[4], serial[5]);
-
+	printf(" WPS Serial          : %.2X:%.6X\n", LORAcomm[from].wpsdata.serialmsb, LORAcomm[from].wpsdata.serialble);
 	uint8_t wpsswmaj = (LORAcomm[from].wpsdata.versions >> 8) & 0b00001111;
 	uint8_t wpsswmin = (uint8_t)LORAcomm[from].wpsdata.versions & 0b00111111;
-	printf(" WPS Software Version: %d.d", wpsswmaj, wpsswmin);
+	if (wpsswmin > 9) printf(" WPS Software Version: %d.%d\n", wpsswmaj, wpsswmin);
+	if (wpsswmin < 10) printf(" WPS Software Version: %d.0%d\n", wpsswmaj, wpsswmin);
 
 	printf(" WPS Sequence Number : %d\n", (uint32_t)(LORAcomm[from].wpsdata.sequence3 * 256 * 256 + LORAcomm[from].wpsdata.sequence2 * 256 + LORAcomm[from].wpsdata.sequence1));
 
@@ -1895,8 +1863,10 @@ void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, u
 	{
 		printf("Diff. Check\n");
 		uint8_t multiplier = ((LORAcomm[from].wpsdata.diffmultp_bleto_gain & 0b00000011) + 1) * 10;
-		printf(" WPS Max. Variance L.: (%d %) \n", ((LORAcomm[from].wpsdata.varlimits & 0b11111000) >> 3)*multiplier);
-		printf(" WPS Min. Variance L.: (%d %) \n", (LORAcomm[from].wpsdata.varlimits & 0b00000111)*multiplier);
+		uint8_t varlim = ((LORAcomm[from].wpsdata.varlimits & 0b11111000) >> 3);
+		uint8_t varbase = (LORAcomm[from].wpsdata.varlimits & 0b00000111);
+		printf(" WPS Max. Variance L.: %d {%d(10 x %d+1)} \n", varlim*multiplier, varlim, multiplier / 10 - 1);
+		printf(" WPS Min. Variance L.: %d {%d(10 x %d+1)} \n", varbase*multiplier, varbase, multiplier / 10 - 1);
 	}
 	else
 	{
@@ -1905,19 +1875,12 @@ void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, u
 		printf(" WPS Min. Variance L.: (%d %) \n", (LORAcomm[from].wpsdata.varlimits & 0b00000111));
 	}
 
-
-	/*float vector;
-	uint8_t *vec_pointer = (uint8_t*)&vector;
-	for (uint8_t i = 0; i < sizeof(vector); i++)
-	{
-		vec_pointer[i] = LORAcomm[printindex].data_from_wps[28 + i];
-	}*/
 	printf(" WPS Vector          : %6.2f \n", LORAcomm[from].wpsdata.vector);
 
 	float temperature = 0;
 
-	int16_t tmp = LORAcomm[from].wpsdata.temp;
-	uint8_t hwtype = LORAcomm[from].wpsdata.temp >> 12;
+	int16_t tmp = (int16_t)LORAcomm[from].wpsdata.temp;
+	uint8_t hwtype = LORAcomm[from].wpsdata.versions >> 12;
 
 	if (hwtype <= 2)
 	{
@@ -1979,7 +1942,7 @@ void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, u
 	}
 
 	printf(" Battery Level       : %d % \n", WPSVoltageLevel(LORAcomm[from].wpsdata.voltage));
-	printf(" Battery Voltage     : %3.2f V \n", ((float)(WPSVoltageLevel(LORAcomm[from].wpsdata.voltage*3.3 * 2 / 1024))));
+	printf(" Battery Voltage     : %3.2f V \n", (float)LORAcomm[from].wpsdata.voltage*3.3 * 2 / 1024);
 	printf(" Vehicle Detected    : "); if ((LORAcomm[from].wpsdata.error_vehicle & 0b10000000) >> 7) { printf("True\n"); }
 	else { printf("False\n"); }
 
