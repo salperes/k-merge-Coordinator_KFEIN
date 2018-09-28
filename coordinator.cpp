@@ -61,6 +61,7 @@ using namespace std;
 #define MSG_PERIODICAL 1
 #define MSG_WPS_LOST 2
 #define MSG_VEHICLE_STATUS 3
+#define MSG_INTERRIM 4
 
 char TIMESTMP_COMPUTER[19];							// zaman damgası değişken tanımı
 
@@ -110,6 +111,7 @@ struct sWPSData
 	uint8_t diffmultp_bleto_gain;
 	uint8_t checksum;
 
+	/*
 	// LOST CHECK VARIABLES
 	bool IsLost;
 	bool WasLost;
@@ -117,9 +119,22 @@ struct sWPSData
 	bool SignalSending;
 	uint64_t WPSSerial;
 	unsigned long LostTimer;
+	*/
 }wpsdata;
 #pragma pack()
 
+#pragma pack(1)
+struct sLostStruct
+{
+	// LOST CHECK VARIABLES
+	bool IsLost;
+	bool WasLost;
+	bool OnRegisteredWPSFile;
+	bool SignalSending;
+	uint64_t WPSSerial;
+	unsigned long LostTimer;
+};
+#pragma pack()
 
 #pragma pack(1)
 struct sCoordData
@@ -142,17 +157,42 @@ struct sCoordData
 }coordinatordata;
 #pragma pack()
 
+#pragma pack(1)
+struct sCoordinator_Config
+{
+	float frq;
+	uint8_t registered_wps;
+	uint8_t lost_wps_count; // LOST WPS SENSOR COUNT için initial değer....
+	uint8_t max_wps;
+	uint8_t address;
+	uint8_t NW_id;
+	uint8_t HWversion;
+	uint8_t SWversion_Minor;
+	uint8_t SWversion_Major;
+	uint32_t serial;
+	uint16_t secret;
+	char ServerAddress[256];
+	uint16_t ServerPort;
+	uint8_t power;
+	uint8_t wps_lost_cycle; //NUMBER OF TRANSMISION CYCLES TO ASSUME WPS LOST
+	char mqtt_username[40];
+	char mqtt_password[40];
+	char mqtt_topic[40];
+	uint32_t IPaddress;
+};
+#pragma pack()
+sCoordinator_Config coordinator;
 
 
-// MQTT STRUCTS
-
+//////////////////////////////////////////////////////
+//                  MQTT STRUCTS
+//////////////////////////////////////////////////////
 #pragma pack(1)
 struct sMQTTPreamble
 {
-
-	uint8_t	MessageType;						// 00 - PACKET TYPE
+	//11 bytes
+	uint8_t	MessageType;
 	uint32_t Serial;
-
 	// COORDINATOR TIME
 	uint8_t Year;
 	uint8_t Month;
@@ -160,21 +200,23 @@ struct sMQTTPreamble
 	uint8_t Hour;
 	uint8_t Min;
 	uint8_t Sec;
-};
+}preamble;
 #pragma pack()
 
 #pragma pack(1)
 struct sMQTTCoordinatorHealth
 {
+	//12 bytes
 	float Voltage;
 	float Temp;
 	float Hum;
-};
+}coordhealth;
 #pragma pack()
 
 #pragma pack(1)
 struct sMQTTCoordinatorConfig
 {
+	//15 bytes
 	uint8_t Address;				// 09 - COORDINATOR_ADDRESS
 	uint8_t NW_id;					// 10 - NETWORK ID
 	uint8_t HWversion;				// 11 - HW_VERSION
@@ -194,7 +236,7 @@ struct sMQTTCoordinatorConfig
 #pragma pack(1)
 struct sMQTTWPSinterrim
 {
-	// DYNAMIC VALUES (Bytes 00-15)
+	// 19 Bytes
 	uint8_t nw_id;
 	uint32_t sequence;
 	uint16_t temp;
@@ -212,11 +254,11 @@ struct sMQTTWPSinterrim
 #pragma pack(1)
 struct sMQTTWPScfg
 {
+	// 28 bytes
 	uint8_t hwvers;
 	uint8_t swvermaj;
 	uint8_t swvermin;
-	uint32_t serialble;
-	uint16_t serialmsb;
+	uint64_t serial;
 	uint8_t magomxy;
 	uint8_t magomz;
 	uint8_t magfrq;
@@ -225,7 +267,8 @@ struct sMQTTWPScfg
 	uint8_t varlimit;
 	uint8_t varbase;
 
-	uint8_t rssilimits;
+	uint8_t rssilimit;
+	uint8_t rssibase;
 	uint8_t blepw;
 	uint8_t radiopw;
 	uint8_t chkrssi;
@@ -234,35 +277,36 @@ struct sMQTTWPScfg
 	uint8_t lorachannel;
 	uint8_t diffmultp;
 	uint8_t bleto;
-	uint8_t gain;
+
 };
 #pragma pack()
 
 #pragma pack(1)
 struct sMQTTinitial
 {
-	sMQTTPreamble preamble;
-	sMQTTCoordinatorHealth coordhealth;
-	sMQTTCoordinatorConfig coordcfg;
+	sMQTTPreamble preamble; //11 bytes
+	sMQTTCoordinatorHealth coordhealth; //12 bytes
+	//sMQTTCoordinatorConfig coordcfg; //15 bytes
+	sCoordinator_Config coordcfg;
 }mqttinitial;
 #pragma pack()
 
 #pragma pack(1)
 struct sMQTTPeriodical
 {
-	sMQTTPreamble preamble;
-	sMQTTCoordinatorHealth coordhealth;
-	sMQTTWPSinterrim interrim;
-	sMQTTWPScfg wpscfg;
+	sMQTTPreamble preamble;//11 bytes
+	sMQTTCoordinatorHealth coordhealth; //12 bytes
+	sMQTTWPSinterrim interrim;//19 bytes
+	sMQTTWPScfg wpscfg;//28 bytes
 }mqttperiodical;
 #pragma pack()
 
 #pragma pack(1)
 struct sMQTTinterrim
 {
-	sMQTTPreamble preamble;
-	sMQTTCoordinatorHealth coordhealth;
-	sMQTTWPSinterrim interrim;
+	sMQTTPreamble preamble;//11 bytes
+	sMQTTCoordinatorHealth coordhealth;//12 bytes
+	sMQTTWPSinterrim interrim;//19 bytes
 }mqttinterrim;
 #pragma pack()
 
@@ -283,82 +327,19 @@ struct sLORAcomm
 	bool FINReceived;
 	bool MQTTmsgSend;
 	sWPSData wpsdata;
+	sLostStruct loststruct;
 	sCoordData coordinatordata;
-
-	//sWPSLostCheckStruct WPSLostCheckStruct;
-
-	//newver uint8_t data_from_wps[WPS_PACKET_LENGHT];			// DEFINE VARIABLE FOR WPS PACKET LENGHT
-	//newver uint8_t data_to_wps[COORDINATOR_PACKET_LENGHT];		// DEFINE VARIABLE FOR COORDINATOR PACKET LENGHT
 };
 #pragma pack()
-//vector <sLORAcomm> LORAcomm;
+
 sLORAcomm LORAcomm[255];
 
-/*struct sWPSNewConfig
-{
-	uint8_t WPSaddress;
-	uint64_t WPSSerial;
-	bool ConfigSet;
-
-	uint8_t nWPS_MAX_RSSI_DIFF;
-	uint8_t nWPS_MIN_RSSI_DIFF;
-	uint8_t nWPS_CHECK_RSSI;
-
-	uint8_t nWPS_MAG_FRQ;
-	uint8_t nWPS_GAIN;
-	uint8_t nWPS_MAG_OMXY;
-	uint8_t nWPS_MAG_OMZ;
-
-	uint8_t nWPS_VECTOR_VARIANCE_LIMIT;
-	uint8_t nWPS_MIN_VARIANCE;
-
-	uint8_t nWPS_SLEEP_COUNT;
-	uint8_t nWPS_DETECTION_COUNT;
-
-	uint8_t nWPS_BLE_POWER;
-	uint8_t nWPS_BLE_TIMEOUT;
-
-	uint8_t nWPS_RADIO_TX_POWER;
-	uint8_t nWPS_LORA_CHANNEL;
-
-	uint8_t nWPS_NW_ID;
-	uint8_t nWPS_ADDRESS;
-	uint8_t nCOORDINATOR_ADDRESS;
-
-	uint8_t RESET_FLAG;
-};
-#pragma pack()
-sWPSNewConfig WPSNewConfig[255];
-*/
-
-struct sCoordinator_Config
-{
-public:
-	float frq;
-	uint8_t registered_wps;
-	uint8_t lost_wps_count; // LOST WPS SENSOR COUNT için initial değer....
-	uint8_t max_wps;
-	uint8_t address;
-	uint8_t NW_id;
-	uint8_t HWversion;
-	uint8_t SWversion_Minor;
-	uint8_t SWversion_Major;
-	uint32_t serial;
-	uint16_t secret;
-	char ServerAddress[256];
-	uint16_t ServerPort;
-	uint8_t power;
-	uint8_t wps_lost_cycle; //NUMBER OF TRANSMISION CYCLES TO ASSUME WPS LOST
-	char mqtt_username[40];
-	char mqtt_password[40];
-	char mqtt_topic[40];
-	uint32_t IPaddress;
-} coordinator;
 
 // MQTT TANIMLAMASI
 struct mosquitto *mosq = NULL;
 char client_id[] = { 'c','o','o','r','d','-','0','0','0','0','0','0','\0' }; //MQTT Client ID ilk değeri
 std::string MQTTtopic = "wpsdata";
+std::string MQTTtopic2 = "mqttdata";
 //Flag for Ctrl-C
 volatile sig_atomic_t force_exit = false;
 void sig_handler(int sig)
@@ -459,7 +440,7 @@ int main(int argc, const char* argv[])
 		{
 
 			// LostCheck işlemi için timer ayarı 60 sn
-			if ((millis() - LostCheckTimer) > 60000) // 60 sn'de bir Lost_Check() yapılacak
+			if ((millis() - LostCheckTimer) > 60000) // 300 sn'de bir Lost_Check() yapılacak
 			{
 				LostCheck();
 				LostCheckTimer = millis();
@@ -616,7 +597,6 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 	// Initialize the Mosquitto library
 	mosquitto_lib_init();
 
-
 	mosq = mosquitto_new(client_id, true, NULL);
 	mosquitto_username_pw_set(mosq, coordinator.mqtt_username, coordinator.mqtt_password);
 
@@ -628,7 +608,6 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 		fprintf(stderr, "Can't connect to Mosquitto server\n");
 		return false;
 	}
-
 
 	// MQTT Paket hazırlama
 	time_t t = time(0);   // get time now
@@ -678,6 +657,25 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 	MQTTMsg[7] = (uint8_t)now->tm_min;						// 07 - COORDINATOR TIME MINUTE
 	MQTTMsg[8] = (uint8_t)now->tm_sec;						// 08 - COORDINATOR TIME SECOND
 
+	/////////////////////////////////////////////////////
+	//			 NEW MQTT STRUCTURE PREAMBLE
+	/////////////////////////////////////////////////////
+	preamble.MessageType = MSG_INITIAL;
+	preamble.Serial = coordinator.serial;
+	preamble.Year = (uint8_t)(now->tm_year);
+	preamble.Month = (uint8_t)(now->tm_mon + 1);
+	preamble.Day = (uint8_t)now->tm_mday;
+	preamble.Hour = (uint8_t)now->tm_hour;
+	preamble.Min = (uint8_t)now->tm_min;
+	preamble.Sec = (uint8_t)now->tm_sec;
+
+	/////////////////////////////////////////////////////
+	//			 NEW MQTT STRUCTURE HEALTH
+	/////////////////////////////////////////////////////
+	coordhealth.Voltage = readvoltage()*23.48 / 32768;
+	coordhealth.Temp = 0;
+	coordhealth.Hum = 0;
+
 
 
 	switch (MessageType)
@@ -697,11 +695,6 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 		{
 			MQTTMsg[17 + i] = p[i];
 		}
-		/*MQTTMsg[17] = (uint8_t)(coordinator.frq >> 24);			// 17 - FRQ 4th
-		MQTTMsg[18] = (uint8_t)(coordinator.frq >> 16);				// 18 - FRQ 3rd
-		MQTTMsg[19] = (uint8_t)(coordinator.frq >> 8);				// 19 - FRQ 2nd
-		MQTTMsg[20] = (uint8_t)(coordinator.frq);					// 20 - FRQ 1st
-		*/
 		MQTTMsg[21] = (uint8_t)coordinator.lost_wps_count;			// 21 - LOST WPS COUNT
 		MQTTMsg[22] = (uint8_t)coordinator.registered_wps;			// 22 - REGISTERED WPS COUNT
 		MQTTMsg[23] = (uint8_t)(coordinator.IPaddress >> 24);		// 23 - IP ADDRESS 1st OCTET
@@ -710,15 +703,29 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 		MQTTMsg[26] = (uint8_t)(coordinator.IPaddress);				// 26 - IP ADDRESS 4th OCTET
 		MQTTMsg[27] = (uint8_t)(coordinator.serial >> 16);			// 27 - SERIAL 3rd OCTET
 
+	/////////////////////////////////////////////////////
+	//			 NEW MQTT STRUCTURE INITIAL
+	/////////////////////////////////////////////////////
+		mqttinitial.preamble = preamble;
+		mqttinitial.coordhealth = coordhealth;
+		mqttinitial.coordcfg = coordinator;
+
+		ret = mosquitto_publish(mosq, NULL, MQTTtopic2.c_str(), sizeof(mqttinitial), (uint8_t*)&mqttinitial, 0, false);
+		if (ret)
+		{
+			fprintf(stderr, "Can't publish to Mosquitto server\n");
+			//return false;
+			//delete[] MQTTtopic;
+			//exit(-1);
+		}
+		else fprintf(stderr, "MQTT Published \n");
 
 
-
-																	//printf("FRQ : %d %d %d %d\n", MQTTMsg[17], MQTTMsg[18], MQTTMsg[19], MQTTMsg[20]);
-																	//printf("IP ADDRESS : %d.%d.%d.%d\n", MQTTMsg[26], MQTTMsg[25], MQTTMsg[24], MQTTMsg[23]);
 		break;
+
 	}
 	case MSG_PERIODICAL:
-	case MSG_VEHICLE_STATUS:
+
 	{
 		MQTTMsg[9] = (uint8_t)coordinator.address;											// 09 - COORDINATOR_ADDRESS
 		uint16_t voltage = readvoltage();
@@ -791,9 +798,55 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 		MQTTMsg[57] = ((uint8_t)LORAcomm[index].wpsdata.rssilimits & 0b11111000) >> 3;		// 57 - MAX_RSSI_DIFF
 		MQTTMsg[58] = ((uint8_t)LORAcomm[index].wpsdata.mag_varordiff & 0b01111111);		// 58 - MAG_FRQ, MAG_OMZ, MAG_OMXY
 
+		/////////////////////////////////////////////////////
+		//			 NEW MQTT STRUCTURE PERIODICAL
+		/////////////////////////////////////////////////////
+		preamble.MessageType = MSG_PERIODICAL;
+		mqttperiodical.preamble = preamble;
+		mqttperiodical.coordhealth = coordhealth;
+		mqttperiodical.interrim.nw_id = LORAcomm[index].wpsdata.nw_id;
+		mqttperiodical.interrim.sequence = (uint32_t)LORAcomm[index].wpsdata.sequence3 << 16 | (uint32_t)LORAcomm[index].wpsdata.sequence2 << 8 | (uint32_t)LORAcomm[index].wpsdata.sequence1;
+		mqttperiodical.interrim.temp = LORAcomm[index].wpsdata.temp;
+		mqttperiodical.interrim.voltage = LORAcomm[index].wpsdata.voltage;
+		mqttperiodical.interrim.rssi = LORAcomm[index].wpsdata.rssi;
+		mqttperiodical.interrim.error = LORAcomm[index].wpsdata.error_vehicle & 0b01111111;
+		mqttperiodical.interrim.vehicle = (LORAcomm[index].wpsdata.error_vehicle & 0b10000000) >> 7;
+		mqttperiodical.interrim.retrycount = LORAcomm[index].wpsdata.retry_variance & 0b00001111;
+		mqttperiodical.interrim.variance = (LORAcomm[index].wpsdata.retry_variance & 0b11110000) >> 4;
+		mqttperiodical.interrim.vector = LORAcomm[index].wpsdata.vector;
+		mqttperiodical.interrim.coordrssi = LORAcomm[index].coordinatordata.rssi;
 
+		mqttperiodical.wpscfg.hwvers = (uint8_t)(LORAcomm[index].wpsdata.versions >> 12);
+		mqttperiodical.wpscfg.swvermaj = (uint8_t)(LORAcomm[index].wpsdata.versions >> 8) & 0b00001111;
+		mqttperiodical.wpscfg.swvermin = (uint8_t)LORAcomm[index].wpsdata.versions & 0b00111111;
+		mqttperiodical.wpscfg.serial = (uint64_t)LORAcomm[index].wpsdata.serialmsb << 32 | LORAcomm[index].wpsdata.serialble;
+		mqttperiodical.wpscfg.magomxy = (LORAcomm[index].wpsdata.mag_varordiff & 0b00001100) >> 2;
+		mqttperiodical.wpscfg.magomz = (LORAcomm[index].wpsdata.mag_varordiff & 0b00000011);
+		mqttperiodical.wpscfg.magfrq = (LORAcomm[index].wpsdata.mag_varordiff & 0b01110000) >> 4;
+		mqttperiodical.wpscfg.maggain = (LORAcomm[index].wpsdata.diffmultp_bleto_gain & 0b00001100) >> 2;
+		mqttperiodical.wpscfg.varordiff = (LORAcomm[index].wpsdata.mag_varordiff & 0b10000000) >> 7;
+		mqttperiodical.wpscfg.varlimit = LORAcomm[index].wpsdata.varlimits >> 3;
+		mqttperiodical.wpscfg.varbase = LORAcomm[index].wpsdata.varlimits & 0b00000111;
+		mqttperiodical.wpscfg.rssilimit = LORAcomm[index].wpsdata.rssilimits & 0b11111000 >> 3;
+		mqttperiodical.wpscfg.rssibase = LORAcomm[index].wpsdata.rssilimits & 0b00000111;
+		mqttperiodical.wpscfg.blepw = (LORAcomm[index].wpsdata.blepw_radiopw_chkrssi & 0b01100000) >> 5;
+		mqttperiodical.wpscfg.radiopw = LORAcomm[index].wpsdata.blepw_radiopw_chkrssi & 0b00011111;
+		mqttperiodical.wpscfg.chkrssi = (LORAcomm[index].wpsdata.blepw_radiopw_chkrssi & 0b10000000) >> 7;
+		mqttperiodical.wpscfg.vehicledc = (LORAcomm[index].wpsdata.vehicledc_sleepc & 0b11000000) >> 6;
+		mqttperiodical.wpscfg.sleepc = LORAcomm[index].wpsdata.vehicledc_sleepc & 0b00111111;
+		mqttperiodical.wpscfg.lorachannel = LORAcomm[index].wpsdata.lorachannel;
+		mqttperiodical.wpscfg.diffmultp = LORAcomm[index].wpsdata.diffmultp_bleto_gain & 0b00000011;
+		mqttperiodical.wpscfg.bleto = (LORAcomm[index].wpsdata.diffmultp_bleto_gain & 0b11110011) >> 4;
 
-
+		ret = mosquitto_publish(mosq, NULL, MQTTtopic2.c_str(), sizeof(mqttperiodical), (uint8_t*)&mqttperiodical, 0, false);
+		if (ret)
+		{
+			fprintf(stderr, "Can't publish to Mosquitto server\n");
+			//return false;
+			//delete[] MQTTtopic;
+			//exit(-1);
+		}
+		else fprintf(stderr, "MQTT Published \n");
 		break;
 	}
 	case MSG_WPS_LOST:
@@ -809,6 +862,62 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 		break;
 	}
 
+	case MSG_VEHICLE_STATUS:
+	{
+		preamble.MessageType = MSG_VEHICLE_STATUS;
+		mqttinterrim.preamble = preamble;
+		mqttinterrim.coordhealth = coordhealth;
+		mqttinterrim.interrim.nw_id = LORAcomm[index].wpsdata.nw_id;
+		mqttinterrim.interrim.sequence = (uint32_t)LORAcomm[index].wpsdata.sequence3 << 16 | (uint32_t)LORAcomm[index].wpsdata.sequence2 << 8 | (uint32_t)LORAcomm[index].wpsdata.sequence1;
+		mqttinterrim.interrim.temp = LORAcomm[index].wpsdata.temp;
+		mqttinterrim.interrim.voltage = LORAcomm[index].wpsdata.voltage;
+		mqttinterrim.interrim.rssi = LORAcomm[index].wpsdata.rssi;
+		mqttinterrim.interrim.error = LORAcomm[index].wpsdata.error_vehicle & 0b01111111;
+		mqttinterrim.interrim.vehicle = (LORAcomm[index].wpsdata.error_vehicle & 0b10000000) >> 7;
+		mqttinterrim.interrim.retrycount = LORAcomm[index].wpsdata.retry_variance & 0b00001111;
+		mqttinterrim.interrim.variance = (LORAcomm[index].wpsdata.retry_variance & 0b11110000) >> 4;
+		mqttinterrim.interrim.vector = LORAcomm[index].wpsdata.vector;
+		mqttinterrim.interrim.coordrssi = LORAcomm[index].coordinatordata.rssi;
+
+		ret = mosquitto_publish(mosq, NULL, MQTTtopic2.c_str(), sizeof(mqttinterrim), (uint8_t*)&mqttinterrim, 0, false);
+		if (ret)
+		{
+			fprintf(stderr, "Can't publish to Mosquitto server\n");
+			//return false;
+			//delete[] MQTTtopic;
+			//exit(-1);
+		}
+		else fprintf(stderr, "MQTT Published \n");
+		break;
+	}
+	case MSG_INTERRIM:
+	{
+		preamble.MessageType = MSG_INTERRIM;
+		mqttinterrim.preamble = preamble;
+		mqttinterrim.coordhealth = coordhealth;
+		mqttinterrim.interrim.nw_id = LORAcomm[index].wpsdata.nw_id;
+		mqttinterrim.interrim.sequence = (uint32_t)LORAcomm[index].wpsdata.sequence3 << 16 | (uint32_t)LORAcomm[index].wpsdata.sequence2 << 8 | (uint32_t)LORAcomm[index].wpsdata.sequence1;
+		mqttinterrim.interrim.temp = LORAcomm[index].wpsdata.temp;
+		mqttinterrim.interrim.voltage = LORAcomm[index].wpsdata.voltage;
+		mqttinterrim.interrim.rssi = LORAcomm[index].wpsdata.rssi;
+		mqttinterrim.interrim.error = LORAcomm[index].wpsdata.error_vehicle & 0b01111111;
+		mqttinterrim.interrim.vehicle = (LORAcomm[index].wpsdata.error_vehicle & 0b10000000) >> 7;
+		mqttinterrim.interrim.retrycount = LORAcomm[index].wpsdata.retry_variance & 0b00001111;
+		mqttinterrim.interrim.variance = (LORAcomm[index].wpsdata.retry_variance & 0b11110000) >> 4;
+		mqttinterrim.interrim.vector = LORAcomm[index].wpsdata.vector;
+		mqttinterrim.interrim.coordrssi = LORAcomm[index].coordinatordata.rssi;
+
+		ret = mosquitto_publish(mosq, NULL, MQTTtopic2.c_str(), sizeof(mqttinterrim), (uint8_t*)&mqttinterrim, 0, false);
+		if (ret)
+		{
+			fprintf(stderr, "Can't publish to Mosquitto server\n");
+			return false;
+			//delete[] MQTTtopic;
+			//exit(-1);
+		}
+		else fprintf(stderr, "MQTT Published \n");
+		break;
+	}
 	}
 
 
@@ -821,9 +930,11 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 	if (ret)
 	{
 		fprintf(stderr, "Can't publish to Mosquitto server\n");
+		return false;
 		//delete[] MQTTtopic;
 		//exit(-1);
 	}
+	else fprintf(stderr, "old MQTT Published \n");
 
 
 
@@ -844,50 +955,48 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 
 void WPSLostCheckINIT(uint8_t wpscount)
 {
-	for (uint8_t i = 0; i < 256; i++)
+	for (int i = 0; i < 256; i++)
 	{
-		LORAcomm[i].wpsdata.LostTimer = 1000;
-		LORAcomm[i].wpsdata.IsLost = 0;
-		LORAcomm[i].wpsdata.WasLost = 0;
-		LORAcomm[i].wpsdata.SignalSending = false;
-		LORAcomm[i].wpsdata.OnRegisteredWPSFile = false;
-
+		LORAcomm[i].loststruct.LostTimer = 1000;
+		LORAcomm[i].loststruct.IsLost = 0;
+		LORAcomm[i].loststruct.WasLost = 0;
+		LORAcomm[i].loststruct.SignalSending = false;
+		LORAcomm[i].loststruct.OnRegisteredWPSFile = false;
+		LORAcomm[i].loststruct.WPSSerial = 0;
 		LORAcomm[i].WPSAddress = 0;
 		LORAcomm[i].ACTSend = false;
 		LORAcomm[i].FINReceived = false;
 		LORAcomm[i].MQTTmsgSend = false;
 	}
-
 }
 
 void LostCheck()
 {
-	return;
+	//return;
 	uint8_t NewLostCount = 0;
 	uint8_t NewFoundCount = 0;
 	unsigned long delta = 0;
 
 	printf(" LOST CHECK FUNCTION....\n");
 
-	for (uint8_t i = 0; i < 256; i++)
+	for (int i = 0; i <= 255; i++)
 		//newver	for (uint8_t i = 0; i < coordinator.registered_wps; i++)
 	{
 		if (LORAcomm[i].WPSAddress == 0) continue;
-		//newver delta = millis() - WPSLostCheckStruct[i].LostTimer;
-		delta = millis() - LORAcomm[i].wpsdata.LostTimer;
+		delta = millis() - LORAcomm[i].loststruct.LostTimer;
 		long sleepcount = LORAcomm[i].wpsdata.vehicledc_sleepc & 0b00111111;
 		//newver if (delta >((SleepCycleFactor * 8000) * (long)(WPSLostCheckStruct[i].SleepCount)*(long)(coordinator.wps_lost_cycle)))
 		if (delta > ((SleepCycleFactor * 8000) * sleepcount*(long)(coordinator.wps_lost_cycle)))
 		{
-			//newver if (WPSLostCheckStruct[i].IsLost == 0)
-			if (LORAcomm[i].wpsdata.IsLost == false)
+
+			if (LORAcomm[i].loststruct.IsLost == false)
 			{
 				WPSSignalSending--;
 				NUMBER_OF_LOST_WPS++;
-				//newver WPSLostCheckStruct[i].IsLost = 1;
-				LORAcomm[i].wpsdata.IsLost = true;
-				//newver WPSLostCheckStruct[i].SignalSend = false;
-				LORAcomm[i].wpsdata.SignalSending = false;
+
+				LORAcomm[i].loststruct.IsLost = true;
+
+				LORAcomm[i].loststruct.SignalSending = false;
 
 				cout << "Lost WPS Packet Will Be Sent.." << endl;
 				SendMessageMQTT(i, MSG_WPS_LOST);
@@ -895,23 +1004,20 @@ void LostCheck()
 				mosquitto_destroy(mosq);
 				mosquitto_lib_cleanup();
 			}
-
 			printf(" WPS Address # %d # is lost...\n", i);
 		}
 
-		if (LORAcomm[i].wpsdata.IsLost == true && LORAcomm[i].wpsdata.WasLost == false)
-			//newver if (WPSLostCheckStruct[i].IsLost > WPSLostCheckStruct[i].WasLost)
+		if (LORAcomm[i].loststruct.IsLost == true && LORAcomm[i].loststruct.WasLost == false)
+
 		{
 			NewLostCount++;//YENİ LOST WPS VAR
-						   //WPSLostCheckStruct[i].StatusChange = true;
-			//newver WPSLostCheckStruct[i].WasLost = WPSLostCheckStruct[i].IsLost;
-			LORAcomm[i].wpsdata.WasLost = true;
+			LORAcomm[i].loststruct.WasLost = true;
 			printf(" Number of new lost wps : %d\n", NewLostCount);
 		}
 
 	}
 	printf("\n");
-
+	printf(" LOST CHECK FUNCTION ENDED....\n");
 	if (NewLostCount > 0)
 	{
 		printf("LOST PACKET WILL BE SENT!!!!\n");
@@ -991,15 +1097,15 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 					uint8_t waslost = (uint8_t)atoi(token[6]);
 					uint64_t wpsserial = (uint64_t)msbserial << 24 | bleserial;
 
-					LORAcomm[wpsaddress].wpsdata.WPSSerial = (uint64_t)msbserial << 24 | bleserial;
+					LORAcomm[wpsaddress].loststruct.WPSSerial = (uint64_t)msbserial << 32 | bleserial;
 					LORAcomm[wpsaddress].WPSAddress = wpsaddress;
 					LORAcomm[wpsaddress].wpsdata.serialmsb = msbserial;
 					LORAcomm[wpsaddress].wpsdata.serialble = bleserial;
 					LORAcomm[wpsaddress].wpsdata.vehicledc_sleepc = (LORAcomm[i].wpsdata.vehicledc_sleepc & 0b11000000) | sleepcount;
-					LORAcomm[wpsaddress].wpsdata.IsLost = islost;
-					LORAcomm[wpsaddress].wpsdata.WasLost = waslost;
-					LORAcomm[wpsaddress].wpsdata.OnRegisteredWPSFile = true;
-					LORAcomm[wpsaddress].wpsdata.SignalSending = false;
+					LORAcomm[wpsaddress].loststruct.IsLost = islost;
+					LORAcomm[wpsaddress].loststruct.WasLost = waslost;
+					LORAcomm[wpsaddress].loststruct.OnRegisteredWPSFile = true;
+					LORAcomm[wpsaddress].loststruct.SignalSending = false;
 
 
 
@@ -1007,7 +1113,7 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 						(coordinator.registered_wps + 1), wpsaddress, msbserial, bleserial, sleepcount);
 
 
-					if (LORAcomm[wpsaddress].wpsdata.IsLost == 0)
+					if (LORAcomm[wpsaddress].loststruct.IsLost == 0)
 
 					{
 						printf("FALSE\n");
@@ -1036,7 +1142,7 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 		//newver	{
 		//newver		if (WPSLostCheckStruct[i].WPSAddress == WPSAddress)  // WPSAddress ile WPSLostCheckStruct.WPSAddress eşitliğine bak
 		//newver		if (WPSLostCheckStruct[i].OnRegisteredWPSFile) return true; // && !WPSLostCheckStruct[i].StatusChange) return true; // dosyada var ve status değişimi yoksa çık..
-		if (LORAcomm[WPSAddress].wpsdata.OnRegisteredWPSFile) return true;
+		if (LORAcomm[WPSAddress].loststruct.OnRegisteredWPSFile) return true;
 
 		//newver	if (!WPSLostCheckStruct[i].OnRegisteredWPSFile) // dosya içerisinde yoksa dosyaya ekle...
 		//newver		{
@@ -1063,16 +1169,16 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 		wpsfile << buffer << " ";
 
 		//newver int_to_str(WPSLostCheckStruct[i].IsLost, buffer, 0, 10);
-		int_to_str(LORAcomm[WPSAddress].wpsdata.IsLost, buffer, 0, 10);
+		int_to_str(LORAcomm[WPSAddress].loststruct.IsLost, buffer, 0, 10);
 		wpsfile << buffer << " ";
 
 		//newver int_to_str(WPSLostCheckStruct[i].WasLost, buffer, 0, 10);
-		int_to_str(LORAcomm[WPSAddress].wpsdata.WasLost, buffer, 0, 10);
+		int_to_str(LORAcomm[WPSAddress].loststruct.WasLost, buffer, 0, 10);
 		wpsfile << buffer << " " << endl;
 
 		wpsfile.close();
 		//newver WPSLostCheckStruct[i].OnRegisteredWPSFile = true;
-		LORAcomm[WPSAddress].wpsdata.OnRegisteredWPSFile = true;
+		LORAcomm[WPSAddress].loststruct.OnRegisteredWPSFile = true;
 
 		//WPSLostCheckStruct[i].StatusChange = false;
 		coordinator.registered_wps++;
@@ -1111,11 +1217,11 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 			wpsfile << buffer << " ";
 
 			//newver int_to_str(WPSLostCheckStruct[i].IsLost, buffer, 0, 10);
-			int_to_str(LORAcomm[i].wpsdata.IsLost, buffer, 0, 10);
+			int_to_str(LORAcomm[i].loststruct.IsLost, buffer, 0, 10);
 			wpsfile << buffer << " ";
 
 			//newver int_to_str(WPSLostCheckStruct[i].WasLost, buffer, 0, 10);
-			int_to_str(LORAcomm[i].wpsdata.WasLost, buffer, 0, 10);
+			int_to_str(LORAcomm[i].loststruct.WasLost, buffer, 0, 10);
 			wpsfile << buffer << " " << endl;
 
 			// WPS Adresi 0'dan farklı girildiyse WPS çıkartılmış veya transfer edilmiş demektir. 
@@ -1361,7 +1467,7 @@ bool LORARead()
 
 
 	// Should be a message for us now
-	uint8_t data_from_wps_temp[WPS_PACKET_LENGHT];
+	//uint8_t data_from_wps_temp[WPS_PACKET_LENGHT];
 	//newver uint8_t len = sizeof(data_from_wps_temp);
 	uint8_t len = sizeof(wpsdata);
 
@@ -1382,9 +1488,9 @@ bool LORARead()
 	{
 		printf("\n\n\n Packet Received..\n");
 		printf(" from = %d\n", from);
-		//newver printf(" Network ID     = %d\n", data_from_wps_temp[0]);
+
 		printf(" Network ID     = %d\n", wpsdata.nw_id);
-		//newver switch (data_from_wps_temp[1])
+
 		switch (wpsdata.flagtype)
 		{
 		case FLAG_PERIODICAL: { printf(" Packet Type    = Periodical\n"); break; }
@@ -1395,7 +1501,7 @@ bool LORARead()
 		case FLAG_PING: { printf(" Packet Type    = Ping Packet\n"); break; }
 		}
 
-		//newver if (data_from_wps_temp[0] != coordinator.NW_id)
+
 		if (wpsdata.nw_id != coordinator.NW_id)
 		{
 			printf(" Wrong NW ID...\n");
@@ -1433,7 +1539,7 @@ bool LORARead()
 		//						    GET DATA FROM WPS STEP #2
 		//						
 		//						   FIN veya CFG_SET DEĞİL İSE
-		//				BU DURUMDA PERIODICAL-VEHICLEST-INTERRIM PAKEDİDIR
+		//				BU DURUMDA PERIODICAL-VEHICLE_ST-INTERRIM PAKEDİDIR
 		//					ACK_OK, RETRANSMIT VEYA CHANGE_REQUEST YOLLA
 		////////////////////////////////////////////////////////////////////////////////////
 
@@ -1443,8 +1549,19 @@ bool LORARead()
 		if ((wpsdata.flagtype != FLAG_FIN) && (wpsdata.flagtype != FLAG_CONFIGURATION_SET))
 		{
 			//newver checksumreceived = data_from_wps_temp[len - 1];
-			checksumreceived = wpsdata.checksum;
-			checksum = wpsdata.nw_id;
+
+
+			if (wpsdata.flagtype == FLAG_INTER)
+			{
+				checksum = 0;
+				checksumreceived = 0;
+			}
+			else
+			{
+				checksumreceived = wpsdata.checksum;
+				checksum = wpsdata.nw_id;
+			}
+
 			//checksum = wpsdata.selfChecksum(); //CHECKSUM KONTROL ETMEYECEK /////////////////////////////////////////////////////////////////////
 
 			// IF CHECKSUM ERROR SEND RETRANSMIT PACKET
@@ -1469,12 +1586,12 @@ bool LORARead()
 				return true;
 			}
 
+
 			LORAcomm[from].wpsdata = wpsdata;
-			LORAcomm[from].WPSAddress = from;
+			//LORAcomm[from].WPSAddress = from;
 			LORAcomm[from].ACTSend = false;
 
-
-			uint32_t sequence; sequence = (uint32_t)data_from_wps_temp[2] * 256 * 256 + (uint16_t)data_from_wps_temp[3] * 256 + data_from_wps_temp[4];
+			uint32_t sequence; sequence = (uint32_t)LORAcomm[from].wpsdata.sequence3 * 256 * 256 + (uint16_t)LORAcomm[from].wpsdata.sequence2 * 256 + LORAcomm[from].wpsdata.sequence1;
 
 			///////////////////////////////////////////////////////////////
 			// CHECKSUM OK İSE ACK_OK PAKETDİ YOLLA....
@@ -1495,8 +1612,6 @@ bool LORARead()
 			{
 				PrepareDataToWPS(from, FLAG_ACK_OK, Rssi);
 			}
-
-
 
 			// ACK_OK VEYA CHG_RQ PAKEDİ YOLLA SONUCUNU ACTSend içerisine yaz...
 			LORAcomm[from].ACTSend = SendToWPS(from);
@@ -1541,10 +1656,20 @@ bool LORARead()
 			LORAcomm[from].FINReceived = true;
 			LORAcomm[from].MQTTmsgSend = false;
 
+
 			if (LORAcomm[from].wpsdata.flagtype == FLAG_PERIODICAL)
 			{
 				cout << "Periodical MQTT Packet Will Be Sent.." << endl << endl;
 				SendMessageMQTT(from, MSG_PERIODICAL);
+				mosquitto_disconnect(mosq);
+				mosquitto_destroy(mosq);
+				mosquitto_lib_cleanup();
+			}
+
+			if (LORAcomm[from].wpsdata.flagtype == FLAG_INTER)
+			{
+				cout << "Interrim MQTT Packet Will Be Sent.." << endl << endl;
+				SendMessageMQTT(from, MSG_INTERRIM);
 				mosquitto_disconnect(mosq);
 				mosquitto_destroy(mosq);
 				mosquitto_lib_cleanup();
@@ -1565,43 +1690,44 @@ bool LORARead()
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////
 			if (LORAcomm[from].WPSAddress == from)
 			{
-				if (LORAcomm[from].wpsdata.IsLost)
+				if (LORAcomm[from].loststruct.IsLost)
 				{
 					printf(" This WPS was lost ... %d   \n", from);
 					NUMBER_OF_LOST_WPS--;
-					LORAcomm[from].wpsdata.IsLost = false;
-					LORAcomm[from].wpsdata.WasLost = false;
+					LORAcomm[from].loststruct.IsLost = false;
+					LORAcomm[from].loststruct.WasLost = false;
 					RWRegisteredWPSCfg('W', 0);
 				}
 
-				LORAcomm[from].wpsdata.LostTimer = millis();
+				LORAcomm[from].loststruct.LostTimer = millis();
 
-				if (!LORAcomm[from].wpsdata.SignalSending)
+				if (!LORAcomm[from].loststruct.SignalSending)
 				{
-					LORAcomm[from].wpsdata.SignalSending = true;
+					LORAcomm[from].loststruct.SignalSending = true;
 					WPSSignalSending++;
 				}
 			}
 			else
 			{
 				LORAcomm[from].WPSAddress = from;
-				LORAcomm[from].wpsdata.IsLost = 0;
-				LORAcomm[from].wpsdata.WasLost = 0;
-				LORAcomm[from].wpsdata.LostTimer = millis();
+				LORAcomm[from].loststruct.IsLost = 0;
+				LORAcomm[from].loststruct.WasLost = 0;
+				LORAcomm[from].loststruct.LostTimer = millis();
 
-				LORAcomm[from].wpsdata.WPSSerial = (uint64_t)LORAcomm[from].wpsdata.serialmsb << 24 | LORAcomm[from].wpsdata.serialble;
-				LORAcomm[from].wpsdata.SignalSending = true;
+				LORAcomm[from].loststruct.WPSSerial = (uint64_t)LORAcomm[from].wpsdata.serialmsb << 32 | LORAcomm[from].wpsdata.serialble;
+				LORAcomm[from].loststruct.SignalSending = true;
 				WPSSignalSending++;
+				printf("write to file...\n");
 				RWRegisteredWPSCfg('A', from);
 			}
 
 			printf(" Live WPS count = %d/%d\n", WPSSignalSending, coordinator.registered_wps);
-			/*			for (uint8_t i = 0; i < (256); i++)
-						{
-							if ((LORAcomm[i].wpsdata.SignalSending == true) && (LORAcomm[i].wpsdata.IsLost == false)) printf(" %d		", i);
-						}
-						cout << endl;
-			*/
+			for (int i = 0; i <= 255; i++)
+			{
+				if ((LORAcomm[i].loststruct.SignalSending == true) && (LORAcomm[i].loststruct.IsLost == false)) printf(" %d		", i);
+			}
+			cout << endl;
+
 			// GELEN VERİLERİ EKRANA YAZ
 
 			WPS_DATA_print(from, len, from, to, id, flags, Rssi, checksum, checksumreceived);
