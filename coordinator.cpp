@@ -27,6 +27,15 @@
 #include<netinet/in.h>//INADDR_ANY
 #include<arpa/inet.h>
 
+#include <string.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <net/if.h>
+#include <unistd.h>
+
+
+
 
 //#include <ads1115.h>
 //#include <wiringPi.h>
@@ -323,6 +332,7 @@ RH_RF95 driver(RF_CS_PIN, RF_IRQ_PIN);
 struct sLORAcomm
 {
 	uint8_t WPSAddress;
+	bool FirstPacketReceived;
 	bool ACTSend;
 	bool FINReceived;
 	bool MQTTmsgSend;
@@ -374,7 +384,7 @@ void FindIPAddress();
 uint32_t hex2dec(const char*hexvalue, int lenght);
 void test_output();
 void ReadMqtt();
-
+void getMacAddress(char *uc_Mac);
 uint16_t readvoltage();
 
 uint8_t test_msqtt[54];
@@ -386,6 +396,9 @@ int main(int argc, const char* argv[])
 	//cout << endl << " Battery Voltage = " << (float)readvoltage()*23.48 / 32768 << " V" << endl;
 	//cout << endl << " Battery Voltage = " << (float)readvoltage()*23.48 / 32768 << " V" << endl;
 	cout << endl << " Battery Voltage = " << (float)readvoltage()*23.48 / 32768 << " V" << endl;
+
+	char mac[32] = { 0 };
+	getMacAddress(mac);
 
 	if (!PrepareCoordinator())
 	{
@@ -439,8 +452,8 @@ int main(int argc, const char* argv[])
 		while (!force_exit)
 		{
 
-			// LostCheck işlemi için timer ayarı 60 sn
-			if ((millis() - LostCheckTimer) > 60000) // 300 sn'de bir Lost_Check() yapılacak
+			// LostCheck işlemi için timer ayarı 300 sn
+			if ((millis() - LostCheckTimer) > 300000) // 300 sn'de bir Lost_Check() yapılacak
 			{
 				LostCheck();
 				LostCheckTimer = millis();
@@ -967,6 +980,7 @@ void WPSLostCheckINIT(uint8_t wpscount)
 		LORAcomm[i].ACTSend = false;
 		LORAcomm[i].FINReceived = false;
 		LORAcomm[i].MQTTmsgSend = false;
+		LORAcomm[i].FirstPacketReceived = false;
 	}
 }
 
@@ -1158,8 +1172,8 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 
 		//newver int_to_str(WPSLostCheckStruct[i].serialmsb, buffer, 0, 10);
 		int_to_str(LORAcomm[WPSAddress].wpsdata.serialmsb, buffer, 0, 10);
-
 		wpsfile << buffer << " ";
+
 		//newver int_to_str(WPSLostCheckStruct[i].seriallsb, buffer, 0, 10);
 		int_to_str(LORAcomm[WPSAddress].wpsdata.serialble, buffer, 0, 10);
 		wpsfile << buffer << " ";
@@ -1411,12 +1425,9 @@ bool PrepareCoordinator()
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//					 BURAYI RASPİ SERİ NUMARASIN SON 3 BYTE'INI ALACAK ŞEKİLDE DEĞİŞTİR 
-		uint16_t msb = COORDINATOR_SERIAL_MSB;
-		uint8_t lsb = COORDINATOR_SERIAL_LSB;
-		uint16_t sixteenbit = msb * 256 + lsb;
+
 		char stringnumber[10];
-		int_to_str(sixteenbit, stringnumber, 0, 10);
+		int_to_str(coordinator.serial, stringnumber, 0, 16);
 		file << "COORDINATOR_SERIAL                 = " << stringnumber << endl;
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1590,6 +1601,7 @@ bool LORARead()
 			LORAcomm[from].wpsdata = wpsdata;
 			//LORAcomm[from].WPSAddress = from;
 			LORAcomm[from].ACTSend = false;
+			LORAcomm[from].FirstPacketReceived = true;
 
 			uint32_t sequence; sequence = (uint32_t)LORAcomm[from].wpsdata.sequence3 * 256 * 256 + (uint16_t)LORAcomm[from].wpsdata.sequence2 * 256 + LORAcomm[from].wpsdata.sequence1;
 
@@ -1625,7 +1637,7 @@ bool LORARead()
 		//						  HABERLEŞME SONA ERİYOR
 		//						  MQTT VERİSİ YOLLANIYOR
 		////////////////////////////////////////////////////////////////////////////////////
-		else if (wpsdata.flagtype == FLAG_CONFIGURATION_SET || wpsdata.flagtype == FLAG_FIN)
+		else if ((wpsdata.flagtype == FLAG_CONFIGURATION_SET || wpsdata.flagtype == FLAG_FIN) && LORAcomm[from].FirstPacketReceived)
 		{
 			if (wpsdata.flagtype == FLAG_CONFIGURATION_SET) printf(" CFG_APPLIED Packet Received from WPS address : %d\n", from);
 			if (wpsdata.flagtype == FLAG_FIN) printf(" FIN Packet Received from WPS address : %d\n", from);
@@ -1655,7 +1667,7 @@ bool LORARead()
 			LORAcomm[from].ACTSend = false;
 			LORAcomm[from].FINReceived = true;
 			LORAcomm[from].MQTTmsgSend = false;
-
+			LORAcomm[from].FirstPacketReceived = false;
 
 			if (LORAcomm[from].wpsdata.flagtype == FLAG_PERIODICAL)
 			{
@@ -2388,4 +2400,30 @@ uint32_t hex2dec(const char*s, int length)
 		n += v;
 	}
 	return n;
+}
+
+void getMacAddress(char *uc_Mac)
+{
+	int fd;
+	struct ifreq ifr;
+	char *iface = (char*)"eth0";
+	// mac[32] = { 0 };
+	char *mac;
+
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+	ifr.ifr_addr.sa_family = AF_INET;
+	strncpy((char *)ifr.ifr_name, (const char *)iface, IFNAMSIZ - 1);
+
+	ioctl(fd, SIOCGIFHWADDR, &ifr);
+
+	close(fd);
+
+	mac = (char *)ifr.ifr_hwaddr.sa_data;
+
+	//display mac address
+	//sprintf((char *)uc_Mac, (const char *)"%.6x\n", mac[3], mac[4], mac[5]);
+	coordinator.serial = (uint32_t)mac[3] << 16 | (uint16_t)mac[4] << 8 | mac[5];
+	printf(" SERIAL FROM ETH0 : %.6x\n", coordinator.serial);
+
 }
