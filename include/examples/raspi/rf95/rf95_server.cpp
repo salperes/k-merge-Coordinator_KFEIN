@@ -44,7 +44,7 @@
 #include "../RasPiBoards.h"
 
 // Our RFM95 Configuration 
-#define RF_FREQUENCY  868.00
+#define RF_FREQUENCY  434.00
 #define RF_NODE_ID    1
 
 // Create an instance of a driver
