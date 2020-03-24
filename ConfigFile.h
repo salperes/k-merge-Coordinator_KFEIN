@@ -1,4 +1,4 @@
-ï»¿#pragma once
+#pragma once
 // -----------------------------  COORDINATOR DEFAULTS --------------------
 #define COORDINATOR_HW_VERSION 1
 #define COORDINATOR_SW_VERSION_MAJOR 0
@@ -8,10 +8,10 @@
 #define COORDINATOR_RADIO_TX_POWER 13
 #define def_WPS_LOST_COUNT 3 // ASSUME WPS LOST AFTER NUMBER TRANSMIT COUNTS
 
-#define MAX_WPS_NUMBER 127 // 0, 128 COODINATOR ADDRESLERÄ°
-#define def_INSTALLED_WPS_COUNT 16 //TEST Ä°Ã‡Ä°N 16 OLARAK BELÄ°RLENDÄ°
+#define MAX_WPS_NUMBER 127 // 0, 128 COODINATOR ADDRESLERÝ
+#define def_INSTALLED_WPS_COUNT 16 //TEST ÝÇÝN 16 OLARAK BELÝRLENDÝ
 
-#define TESTSERVER 	"ec2-54-245-35-126.us-west-2.compute.amazonaws.com"
+#define TESTSERVER 	"amc-wps02.amcpro.com.tr"
 #define def_MQTT_PASSWORD "Alp2013er"
 #define def_MQTT_USERNAME "wpsdevices"
 #define def_MQTT_TOPIC "coordinator"
@@ -23,13 +23,13 @@
 
 // -----------------------------  WPS  DEFAULTS --------------------
 #define def_WPS_ADDRESS 60
-#define WPS_SERIAL 7  //////  SERÄ° NUMARASINA DÄ°KKAT EDÄ°LECEK.... 48bit
+#define WPS_SERIAL 7  //////  SERÝ NUMARASINA DÝKKAT EDÝLECEK.... 48bit
 
 
-#define HW_VERSION 6//BUNA DA DÄ°KKAT EDÄ°LECEK. AÃ‡IKLAMA AÅžAÄžIDA
+#define HW_VERSION 6//BUNA DA DÝKKAT EDÝLECEK. AÇIKLAMA AÞAÐIDA
 
 #define SW_VERSION_MAJOR 3
-#define SW_VERSION_MINOR 06
+#define SW_VERSION_MINOR 07
 
 
 #define def_BLE_TIMEOUT 2
@@ -75,7 +75,7 @@
 
 
 #define WPS_PACKET_LENGHT 32 // PACKET LENGHT FOR WPS PACKET
-// **************************** WPS->COORDINATOR PAKET VERÄ° YAPISI **************************
+// **************************** WPS->COORDINATOR PAKET VERÝ YAPISI **************************
 // 00 - NW ID
 // 01 - FLAG TYPE
 
@@ -84,20 +84,20 @@
 // 02 - SEQUENCE 3rd
 // 03 - SEQUENCE 2nd
 // 04 - SEQUENCE 1st
-// 05 - SENSÃ–R SICAKLIK MSB
-// 06 - SENSÃ–R SICAKLIK LSB
-// 07 - PÄ°L SEVÄ°YESÄ° MSB
-// 08 - PÄ°L SEVÄ°YESÄ° LSB
+// 05 - SENSÖR SICAKLIK MSB
+// 06 - SENSÖR SICAKLIK LSB
+// 07 - PÝL SEVÝYESÝ MSB
+// 08 - PÝL SEVÝYESÝ LSB
 // 09 - LAST RSSI FROM WPS SIDE 
 // 10 - ERROR CODE & VEHICLE STATUS
 //			BIT 0 - LSM303C INIT ERROR
 //			BIT 1 - BLUETOOTH ERROR
 //			BIT 2 - LoRA PREVIOUS TRANSMISSION FAILED
-//			BIT 3-6 BOÅž
+//			BIT 3-6 BOÞ
 //			BIT 7 - VEHICLE STATUS
 // 11 - LAST TRANSMISSION RETRY COUNT & VECTOR VARIANCE
 //			BIT 0-3 - LAST TRANSMISSION RETRY COUNT
-//			BIT 4-7	- VEKTÃ–R SAPMASI
+//			BIT 4-7	- VEKTÖR SAPMASI
 // 12 - Vector 4th
 // 13 - Vector 3rd
 // 14 - Vector 2nd
@@ -111,7 +111,7 @@
 //			BIT 4-7 - WPS HW VERSION
 // 17 - WPS SW Minor Version
 //			BIT 0-5 - WPS SW MINOR
-//			BIT 6-7 - BOÅž
+//			BIT 6-7 - BOÞ
 // 18 - WPS SERIAL 6th
 // 19 - WPS SERIAL 5th
 // 20 - WPS SERIAL 4th
@@ -156,16 +156,16 @@
 //			BIT 6-7 - VEHICLE_DETECTION_COUNT
 // 29 - LORA CHANNEL
 // 30 - DIFF_MULTIPLIER & BLE_WAIT_TIMEOUT & SENSOR GAIN 
-//			BIT 0-1 - DIFF_MULTIPLIER
+//			BIT 0-1 - DIFF_MULTIPLIER	
 //			BIT 2-3 - SENSOR GAIN 
 //			BIT 4-7 - BLE_WAIT_TIMEOUT
 // CHECKSUM
 // (LEN-1) - CHECKSUM
 
 
-// **************************** WPS EEPROM VERÄ° YAPISI **************************
+// **************************** WPS EEPROM VERÝ YAPISI **************************
 // 0, NETWORK_ID
-// 1, 1 //1 EEPROM'DAKÄ° VERÄ°LERÄ° KULLAN DEMEK....
+// 1, 1 //1 EEPROM'DAKÝ VERÝLERÝ KULLAN DEMEK....
 // 2, COORDINATOR_ADDRESS
 // 3, WPS_ADDRESS
 // 4, GAIN
@@ -197,12 +197,12 @@
 // 24, MIN_RSSI_DIFF
 // 25-26-27-28 - Vector0
 // 29 - VarianceOrDiff
-// 30 - InitialState (Sadece Remote Reset iÃ§in) 
-// 31 - DIFFMULTIPLIER - DIFF Ã‡ARPANI (0=x10, 1=x20, 2=x30, 3=40, 4=x50)
+// 30 - InitialState (Sadece Remote Reset için) 
+// 31 - DIFFMULTIPLIER - DIFF ÇARPANI (0=x10, 1=x20, 2=x30, 3=40, 4=x50)
 
 
 #define COORDINATOR_PACKET_LENGHT 16 // PACKET LENGHT FOR REPLY PACKET
-// **************************** COORDINATOR->WPS PAKET VERÄ° YAPISI **************************
+// **************************** COORDINATOR->WPS PAKET VERÝ YAPISI **************************
 // 00 - NETWORK ID
 // 01 - FLAG TYPE 
 #define FLAG_PERIODICAL 1
@@ -215,7 +215,7 @@
 #define FLAG_PING 8 // VERSION 3 and ABOVE
 #define FLAG_INTER 9
 
-// 02 - COORDINATOR SIDE RSSI 
+// 02 - COORDINATOR RSSI
 // 03 - RESET VECTOR0, RESET WPS SOFTWARE, SET NEW CONFIG
 //						0 = No change
 //						BIT 0 = 1 = Reset VECTOR0  (Bit 0)
@@ -223,7 +223,7 @@
 //						BIT 2 = 4 = CHANGE REQUEST
 //						BIT 3 = 8 = InitialState=STATE_BUSY
 //						BIT 4 = 16 = Change WPS address(0), Change NW_ID(1)
-//						BIT 5-7 	BOÅž
+//						BIT 5-7 	BOÞ
 
 // 04 - Change Flag
 //						BIT 0	-	MAG Z,XY,FRQ,VarOrDiff
@@ -278,16 +278,13 @@
 
 
 
-
-
-
 #define GAIN_4 0x00
 #define GAIN_8 0x20
 #define GAIN_12 0x40
 #define GAIN_16 0x60
 
 
-//HMC iÃ§in tanÄ±mlamalar
+//HMC için tanýmlamalar
 
 #define HMC_Address 0x1E
 #define GAIN_088 0x00

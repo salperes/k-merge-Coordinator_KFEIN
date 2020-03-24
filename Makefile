@@ -39,7 +39,7 @@ RHEncryptedDriver.o: $(RADIOHEADBASE)/RHEncryptedDriver.cpp
 				$(CC) $(CFLAGS) -c $(INCLUDE) $<
 
 coordinator: coordinator.o RH_RF95.o RasPi.o RHHardwareSPI.o RHGenericDriver.o RHGenericSPI.o RHSPIDriver.o
-				$(CC) $^ $(LIBS) -o coordinator
+				$(CC) $^ $(LIBS) -o coordinatorLast
 
 clean:
 				rm -rf *.o coordinator
