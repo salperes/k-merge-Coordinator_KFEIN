@@ -55,7 +55,7 @@
 
 using namespace std;
 
-// SPI Ã¼zerinden RFM95 kullanÄ±mÄ± iÃ§in tanÄ±mlar...
+// SPI üzerinden RFM95 kullanýmý için tanýmlar...
 #define BOARD_LORASPI
 
 #define RF_CS_PIN  RPI_V2_GPIO_P1_24 // Slave Select on CE0 so P1 connector pin #24
@@ -71,7 +71,7 @@ using namespace std;
 #define MSG_VEHICLE_STATUS 3
 #define MSG_INTERRIM 4
 
-char TIMESTMP_COMPUTER[19];							// zaman damgasÄ± deÄŸiÅŸken tanÄ±mÄ±
+char TIMESTMP_COMPUTER[19];							// zaman damgasý deðiþken tanýmý
 
 // ----------------------------------------------------------------------------------------------
 // ------------------------                               ---------------------------------------
@@ -80,10 +80,10 @@ char TIMESTMP_COMPUTER[19];							// zaman damgasÄ± deÄŸiÅŸken tanÄ±mÄ±
 // ----------------------------------------------------------------------------------------------
 uint8_t NUMBER_OF_LOST_WPS;
 uint8_t DETECTED_WPS = 0;
-int WPSSignalSending = 0; // Paket yollayan WPS sayÄ±sÄ±
-						  //uint8_t WPSRegistered = 0; // registered WPS dosyasÄ±ndan okunan WPS sayÄ±sÄ±
-unsigned long LostCheckTimer = 0;		// lost wps iÃ§in timeout sayacÄ±. olarak Ã§alÄ±ÅŸÄ±yor.
-										//uint8_t WPS_ID_CORRECTED = 0; //COORDINATOR ADRESINE GÃ–RE DÃœZELTÄ°LMÄ°Åž WPS ID ...LOST CHECK Ä°ÅžLEMÄ° Ä°Ã‡Ä°N
+int WPSSignalSending = 0; // Paket yollayan WPS sayýsý
+						  //uint8_t WPSRegistered = 0; // registered WPS dosyasýndan okunan WPS sayýsý
+unsigned long LostCheckTimer = 0;		// lost wps için timeout sayacý. olarak çalýþýyor.
+										//uint8_t WPS_ID_CORRECTED = 0; //COORDINATOR ADRESINE GÖRE DÜZELTÝLMÝÞ WPS ID ...LOST CHECK ÝÞLEMÝ ÝÇÝN
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -117,7 +117,7 @@ sLORAcomm LORAcomm[255];
 
 // MQTT TANIMLAMASI
 struct mosquitto *mosq = NULL;
-char client_id[] = { 'c','o','o','r','d','-','0','0','0','0','0','0','\0' }; //MQTT Client ID ilk deÄŸeri
+char client_id[] = { 'c','o','o','r','d','-','0','0','0','0','0','0','\0' }; //MQTT Client ID ilk deðeri
 std::string MQTTtopic = "wpsdata";
 std::string MQTTtopic2 = "mqttdata";
 //Flag for Ctrl-C
@@ -131,20 +131,20 @@ void sig_handler(int sig)
 
 // ----------------------------------------------------------------------------------------------
 // ------------------------                               ---------------------------------------
-//							  FONKSÄ°YON DEKLARASYONLARI
+//							  FONKSÝYON DEKLARASYONLARI
 // ------------------------                               ---------------------------------------
 // ----------------------------------------------------------------------------------------------
-char* datetime_f(char dates[]);						// zamanÄ± string haline getirmek iÃ§in
-char* int_to_str(int i, char b[], int format_, int Base);		// datetime_f iÃ§in kullanÄ±lan fonksiyn
-bool LORARead(); //WPS Ã¼zerinden paket okumak ve sonlandÄ±rmak iÃ§in
-void SPI_setup(); // SPI setup iÅŸlemleri
-void RF95_setup(uint8_t RadioPower, uint8_t Coordinator_Address, uint8_t Network_ID, float RFFrequency); //Radyo setup iÅŸlemleri
-bool SendToWPS(uint8_t LORAWPSindex); // WPS Ã¼zerine veri yollama fonksiyonu
+char* datetime_f(char dates[]);						// zamaný string haline getirmek için
+char* int_to_str(int i, char b[], int format_, int Base);		// datetime_f için kullanýlan fonksiyn
+bool LORARead(); //WPS üzerinden paket okumak ve sonlandýrmak için
+void SPI_setup(); // SPI setup iþlemleri
+void RF95_setup(uint8_t RadioPower, uint8_t Coordinator_Address, uint8_t Network_ID, float RFFrequency); //Radyo setup iþlemleri
+bool SendToWPS(uint8_t LORAWPSindex); // WPS üzerine veri yollama fonksiyonu
 void WPS_DATA_print(uint8_t printindex, uint8_t len, uint8_t from, uint8_t to, uint8_t id, uint8_t flags, int16_t Rssi, uint8_t checksum, uint8_t checksumreceived); // debug print
-void PrepareDataToWPS(uint8_t LORAWPSindex, uint8_t flagtype, int16_t Rssi); // WPS'e yollanacak verileri hazÄ±rlama fonksiyonu
-bool PrepareCoordinator(); // Program Ã§alÄ±ÅŸtÄ±rÄ±ldÄ±ÄŸÄ±nda coordinator.conf dosyasÄ± okuma ve yazma
-bool ReadCoordinatorConfig(); //coordinator.conf read iÃ§in
-bool WriteConfig(); //coordinator.conf write iÃ§in... config deÄŸiÅŸtiÄŸinde tÃ¼m dosyayÄ± yeniden oluÅŸturacak
+void PrepareDataToWPS(uint8_t LORAWPSindex, uint8_t flagtype, int16_t Rssi); // WPS'e yollanacak verileri hazýrlama fonksiyonu
+bool PrepareCoordinator(); // Program çalýþtýrýldýðýnda coordinator.conf dosyasý okuma ve yazma
+bool ReadCoordinatorConfig(); //coordinator.conf read için
+bool WriteConfig(); //coordinator.conf write için... config deðiþtiðinde tüm dosyayý yeniden oluþturacak
 void WPSLostCheckINIT(uint8_t wpscount);
 void LostCheck();
 bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress);
@@ -161,6 +161,9 @@ uint8_t test_msqtt[54];
 
 uint8_t WPSVoltageLevel(uint16_t voltage);
 //Main Function
+int ConnectMQTTServer();
+
+
 int main(int argc, const char* argv[])
 {
 	cout << endl << " Battery Voltage = " << (float)readvoltage()*23.48 / 32768 << " V" << endl;
@@ -180,7 +183,7 @@ int main(int argc, const char* argv[])
 
 	//wpsnewconfig.resize(coordinator.max_wps);
 
-	//MQTT ClientID, Coordinator.Serial ile birlikte oluÅŸturulacak ..
+	//MQTT ClientID, Coordinator.Serial ile birlikte oluþturulacak ..
 
 
 	char stringnumber[6];
@@ -193,7 +196,6 @@ int main(int argc, const char* argv[])
 	printf(" MQTT Client ID	: %s\n", client_id);
 	printf(" MQTT Server	: %s\n", coordinator.ServerAddress);
 	printf(" MQTT Port	: %d\n", coordinator.ServerPort);
-
 
 
 	SendMessageMQTT(0, MSG_INITIAL);
@@ -214,8 +216,8 @@ int main(int argc, const char* argv[])
 		while (!force_exit)
 		{
 
-			// LostCheck iÅŸlemi iÃ§in timer ayarÄ± 300 sn
-			if ((millis() - LostCheckTimer) > 300000) // 300 sn'de bir Lost_Check() yapÄ±lacak
+			// LostCheck iþlemi için timer ayarý 300 sn
+			if ((millis() - LostCheckTimer) > 300000) // 300 sn'de bir Lost_Check() yapýlacak
 			{
 				LostCheck();
 				LostCheckTimer = millis();
@@ -364,10 +366,9 @@ uint8_t WPSVoltageLevel(uint16_t voltage)
 
 }
 
-bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
-{
-	//return 0;
 
+int ConnectMQTTServer()
+{
 	// Initialize the Mosquitto library
 	mosquitto_lib_init();
 
@@ -375,15 +376,24 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 	mosquitto_username_pw_set(mosq, coordinator.mqtt_username, coordinator.mqtt_password);
 
 
-	// Establish a connection to the MQTT server. Do not use a keep-alive ping
-	int ret = mosquitto_connect(mosq, coordinator.ServerAddress, coordinator.ServerPort, 0);
+	// Establish a connection to the MQTT server.  use a keep-alive ping
+	int ret = mosquitto_connect(mosq, coordinator.ServerAddress, coordinator.ServerPort, 30);
 	if (ret)
 	{
 		fprintf(stderr, "Can't connect to Mosquitto server\n");
-		return false;
 	}
 
-	// MQTT Paket hazÄ±rlama
+	return ret;
+
+	
+}
+
+
+bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
+{
+
+	int ret=ConnectMQTTServer();
+	// MQTT Paket hazýrlama
 	time_t t = time(0);   // get time now
 	struct tm * now = localtime(&t);
 
@@ -509,7 +519,7 @@ bool SendMessageMQTT(uint8_t index, uint8_t MessageType)
 		MQTTMsg[12] = (uint8_t)coordinator.SWversion_Major;									// 12 - COORDINATOR SW_VERSION MAJOR
 		MQTTMsg[13] = (uint8_t)coordinator.SWversion_Minor;									// 13 - COORDINATOR SW_VERSION MINOR
 		MQTTMsg[14] = (uint8_t)coordinator.HWversion;										// 14 - COORDINATOR HW_VERSION
-		MQTTMsg[15] = (uint8_t)LORAcomm[index].coordinatordata.rssi;						// 15 - COORDINATOR RSSI ---- DÃœZELTÄ°P YOLLA.
+		MQTTMsg[15] = (uint8_t)LORAcomm[index].coordinatordata.rssi;						// 15 - COORDINATOR RSSI ---- DÜZELTÝP YOLLA.
 
 		MQTTMsg[16] = (uint8_t)LORAcomm[index].wpsdata.nw_id;								// 16 - WPS NW ID
 		MQTTMsg[17] = (uint8_t)LORAcomm[index].WPSAddress;									// 17 - WPS ADDRESS
@@ -785,7 +795,7 @@ void LostCheck()
 		if (LORAcomm[i].loststruct.IsLost == true && LORAcomm[i].loststruct.WasLost == false)
 
 		{
-			NewLostCount++;//YENÄ° LOST WPS VAR
+			NewLostCount++;//YENÝ LOST WPS VAR
 			LORAcomm[i].loststruct.WasLost = true;
 			printf(" Number of new lost wps : %d\n", NewLostCount);
 		}
@@ -915,11 +925,11 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 
 		//newver	for (uint8_t i = 0; i < coordinator.max_wps; i++)
 		//newver	{
-		//newver		if (WPSLostCheckStruct[i].WPSAddress == WPSAddress)  // WPSAddress ile WPSLostCheckStruct.WPSAddress eÅŸitliÄŸine bak
-		//newver		if (WPSLostCheckStruct[i].OnRegisteredWPSFile) return true; // && !WPSLostCheckStruct[i].StatusChange) return true; // dosyada var ve status deÄŸiÅŸimi yoksa Ã§Ä±k..
+		//newver		if (WPSLostCheckStruct[i].WPSAddress == WPSAddress)  // WPSAddress ile WPSLostCheckStruct.WPSAddress eþitliðine bak
+		//newver		if (WPSLostCheckStruct[i].OnRegisteredWPSFile) return true; // && !WPSLostCheckStruct[i].StatusChange) return true; // dosyada var ve status deðiþimi yoksa çýk..
 		if (LORAcomm[WPSAddress].loststruct.OnRegisteredWPSFile) return true;
 
-		//newver	if (!WPSLostCheckStruct[i].OnRegisteredWPSFile) // dosya iÃ§erisinde yoksa dosyaya ekle...
+		//newver	if (!WPSLostCheckStruct[i].OnRegisteredWPSFile) // dosya içerisinde yoksa dosyaya ekle...
 		//newver		{
 		fstream wpsfile;
 		char buffer[10];
@@ -999,7 +1009,7 @@ bool RWRegisteredWPSCfg(char ReadWrite, uint8_t WPSAddress)
 			int_to_str(LORAcomm[i].loststruct.WasLost, buffer, 0, 10);
 			wpsfile << buffer << " " << endl;
 
-			// WPS Adresi 0'dan farklÄ± girildiyse WPS Ã§Ä±kartÄ±lmÄ±ÅŸ veya transfer edilmiÅŸ demektir. 
+			// WPS Adresi 0'dan farklý girildiyse WPS çýkartýlmýþ veya transfer edilmiþ demektir. 
 		}
 		wpsfile.close();
 		return true;
@@ -1198,8 +1208,7 @@ bool PrepareCoordinator()
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		file << "COORDINATOR_RADIO_TX_POWER         = " << COORDINATOR_RADIO_TX_POWER << endl;
 
-		int_to_str(BASE_CHANNEL, stringnumber, 0, 10);
-		file << "COORDINATOR_CHANNEL                = " << stringnumber << endl;
+		file << "COORDINATOR_CHANNEL                = " << BASE_CHANNEL << endl;
 
 		int_to_str(coordinator.address, stringnumber, 0, 10);
 		file << "COORDINATOR_ADDRESS                = " << stringnumber << endl;
@@ -1310,12 +1319,12 @@ bool LORARead()
 		////////////////////////////////////////////////////////////////////////////////////
 		//						    GET DATA FROM WPS STEP #2
 		//						
-		//						   FIN veya CFG_SET DEÄžÄ°L Ä°SE
-		//				BU DURUMDA PERIODICAL-VEHICLE_ST-INTERRIM PAKEDÄ°DIR
+		//						   FIN veya CFG_SET DEÐÝL ÝSE
+		//				BU DURUMDA PERIODICAL-VEHICLE_ST-INTERRIM PAKEDÝDIR
 		//					ACK_OK, RETRANSMIT VEYA CHANGE_REQUEST YOLLA
 		////////////////////////////////////////////////////////////////////////////////////
 
-		// FIN PAKEDÄ° DEÄžÄ°L Ä°SE LORAcomm[LORAWPSindex] iÃ§erisine data_from_wps_temp deÄŸerini  ata.
+		// FIN PAKEDÝ DEÐÝL ÝSE LORAcomm[LORAWPSindex] içerisine data_from_wps_temp deðerini  ata.
 		//newver if ((data_from_wps_temp[1] != FLAG_FIN) && (data_from_wps_temp[1] != FLAG_CONFIGURATION_SET))
 
 		if ((wpsdata.flagtype != FLAG_FIN) && (wpsdata.flagtype != FLAG_CONFIGURATION_SET))
@@ -1367,7 +1376,7 @@ bool LORARead()
 			uint32_t sequence; sequence = (uint32_t)LORAcomm[from].wpsdata.sequence3 * 256 * 256 + (uint16_t)LORAcomm[from].wpsdata.sequence2 * 256 + LORAcomm[from].wpsdata.sequence1;
 
 			///////////////////////////////////////////////////////////////
-			// CHECKSUM OK Ä°SE ACK_OK PAKETDÄ° YOLLA....
+			// CHECKSUM OK ÝSE ACK_OK PAKETDÝ YOLLA....
 			///////////////////////////////////////////////////////////////
 
 			printf(" Checksum OK. Sending ACK Packet\n");
@@ -1386,7 +1395,7 @@ bool LORARead()
 				PrepareDataToWPS(from, FLAG_ACK_OK, Rssi);
 			}
 
-			// ACK_OK VEYA CHG_RQ PAKEDÄ° YOLLA SONUCUNU ACTSend iÃ§erisine yaz...
+			// ACK_OK VEYA CHG_RQ PAKEDÝ YOLLA SONUCUNU ACTSend içerisine yaz...
 			LORAcomm[from].ACTSend = SendToWPS(from);
 			LORAcomm[from].FINReceived = false;
 
@@ -1394,9 +1403,9 @@ bool LORARead()
 		////////////////////////////////////////////////////////////////////////////////////
 		//						GET DATA FROM WPS STEP #3
 		//						
-		//						   FIN veya CFG_SET Ä°SE
-		//						  HABERLEÅžME SONA ERÄ°YOR
-		//						  MQTT VERÄ°SÄ° YOLLANIYOR
+		//						   FIN veya CFG_SET ÝSE
+		//						  HABERLEÞME SONA ERÝYOR
+		//						  MQTT VERÝSÝ YOLLANIYOR
 		////////////////////////////////////////////////////////////////////////////////////
 		else if ((wpsdata.flagtype == FLAG_CONFIGURATION_SET || wpsdata.flagtype == FLAG_FIN) && LORAcomm[from].FirstPacketReceived)
 		{
@@ -1404,7 +1413,7 @@ bool LORARead()
 			if (wpsdata.flagtype == FLAG_FIN) printf(" FIN Packet Received from WPS address : %d\n", from);
 			printf(" -------------------------------------------\n");
 
-			//FIN PAKEDÄ°NDEN Ã–NCE ACK_OK SEND EDÄ°LMEMÄ°Åž Ä°SE RETRANSMÄ°T PAKEDÄ° YOLLA -- UNCOMPLETED FIN
+			//FIN PAKEDÝNDEN ÖNCE ACK_OK SEND EDÝLMEMÝÞ ÝSE RETRANSMÝT PAKEDÝ YOLLA -- UNCOMPLETED FIN
 			if (LORAcomm[from].ACTSend == false)
 			{
 				printf(" Uncompleted FIN packet. Request Restransmit..\n\n");
@@ -1458,7 +1467,7 @@ bool LORARead()
 			}
 
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////
-			//								YENÄ° LOST RESET Ä°ÅžLEMÄ°
+			//								YENÝ LOST RESET ÝÞLEMÝ
 			//								
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////
 			if (LORAcomm[from].WPSAddress == from)
@@ -1501,7 +1510,7 @@ bool LORARead()
 			}
 			cout << endl;
 
-			// GELEN VERÄ°LERÄ° EKRANA YAZ
+			// GELEN VERÝLERÝ EKRANA YAZ
 
 			WPS_DATA_print(from, len, from, to, id, flags, Rssi, checksum, checksumreceived);
 			printf(" Index No : %d\n", LORAWPSindex);
@@ -1562,7 +1571,7 @@ void PrepareDataToWPS(uint8_t LORAWPSindex, uint8_t flagtype, int16_t Rssi)
 	uint8_t diffmultip = 0;
 
 	LORAcomm[LORAWPSindex].coordinatordata.nw_id = coordinator.NW_id;
-	LORAcomm[LORAWPSindex].coordinatordata.flagtype = flagtype; // PAKET TÄ°PÄ°
+	LORAcomm[LORAWPSindex].coordinatordata.flagtype = flagtype; // PAKET TÝPÝ
 
 	//						0 = No change
 	//						BIT 0 = 1 = Reset VECTOR0  (Bit 0)
@@ -1572,10 +1581,10 @@ void PrepareDataToWPS(uint8_t LORAWPSindex, uint8_t flagtype, int16_t Rssi)
 	//						BIT 4 = 16=	Change WPS address (0), Change NW_ID (1)
 	LORAcomm[LORAWPSindex].coordinatordata.changerq = 0;
 
-	// WPS ÃœZERÄ°NDEN ALINAN SÄ°NYAL Rssi
+	// WPS ÜZERÝNDEN ALINAN SÝNYAL Rssi
 	LORAcomm[LORAWPSindex].coordinatordata.rssi = (uint8_t)(-1 * Rssi);
 
-	//hangi parametreler deÄŸiÅŸecek?
+	//hangi parametreler deðiþecek?
 	LORAcomm[LORAWPSindex].coordinatordata.changeflag = 0;
 	//						BIT 0	1-	MAG Z,XY,FRQ,VarOrDiff
 	//						BIT 1	2-	Vector Variance Limits
@@ -2011,19 +2020,6 @@ char* int_to_str(int i, char b[], int format_, int Base)
 
 void test_output()
 {
-	/*
-	for (int i = 0; i < 54; i++)
-	{
-	if (i < 10)
-	{
-	printf(" 0%d . %.2X \n", i, test_msqtt[i]);
-	}
-	else
-	{
-	printf(" %d . %.2X \n", i, test_msqtt[i]);
-	}
-	}
-	*/
 	printf(" Message Type			: %d\n", test_msqtt[0]);
 	printf(" Coordinator Serial		: %d\n", ((uint16_t)test_msqtt[1] * 256 + test_msqtt[2]));
 	printf(" Coordinator Time (CALC)	: %d.%2d.%2d - %.2d:%.2d:%.2d\n", (1900 + (uint16_t)test_msqtt[3]), test_msqtt[4], test_msqtt[5], test_msqtt[6], test_msqtt[7], test_msqtt[8]);
@@ -2070,11 +2066,9 @@ void test_output()
 	}
 	printf(" WPS Frequency	(CALC)		: %3.2f MHz\n", wps_frq);
 
-
 	printf(" WPS Error Code			: %d\n", test_msqtt[51]);
 	printf(" WPS BLE Timeout		: %d mins.\n", test_msqtt[52]);
 	printf(" WPS Future Use			: %d\n\n", test_msqtt[53]);
-
 
 }
 

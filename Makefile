@@ -6,7 +6,7 @@
 CC            = g++
 CFLAGS        = -DRASPBERRY_PI -DBCM2835_NO_DELAY_COMPATIBILITY -D__BASEFILE__=\"$*\" -std=c++11
 LIBS          = -lbcm2835 -lmosquitto
-RADIOHEADBASE = /home/pi/CoordinatorServer/include
+RADIOHEADBASE = /home/pi/k-merge-Coordinator_KFEIN/include
 INCLUDE       = -I$(RADIOHEADBASE)
 
 all: coordinator
