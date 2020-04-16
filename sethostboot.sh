@@ -14,10 +14,12 @@ if [ $MAC == "raspberrypi" ]
         mv /etc/hosts_ /etc/hosts
 
 	#echo 'dtoverlay=gpio-no-irq' >> /boot/config.txt
-	sed 's/dtparam=audio=on/dtparam=audio=off/' /boot/config.txt > /boot/config.txt_
-	mv /boot/config.txt_ /boot/config.txt
+	sed -i 's/#dtparam=spi=on/dtparam=spi=on/' /boot/config.txt  
+	sed -i 's/#dtparam=i2c_arm=on/dtparam=i2c_arm=on/' /boot/config.txt 
+	sed -i 's/dtparam=audio=on/dtparam=audio=off/' /boot/config.txt 
+	#mv /boot/config.txt_ /boot/config.txt
 
-        reboot
+        #reboot
         exit
 
 else
