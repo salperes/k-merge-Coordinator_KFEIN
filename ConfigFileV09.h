@@ -11,11 +11,11 @@
 #define MAX_WPS_NUMBER 80 // 0, 41, 82, 123, 184 COODINATOR ADDRESLERİ
 #define def_INSTALLED_WPS_COUNT 16 //TEST İÇİN 16 OLARAK BELİRLENDİ
 
-#define TESTSERVER 	"amc-wps02.amcpro.com.tr"
+#define TESTSERVER 	"SERVER"
 //"78.187.41.206" 
 //"37.77.17.149"
 #define TESTPORT 1883
-#define def_MQTT_PASSWORD "Alp2013er"
+#define def_MQTT_PASSWORD "PASSWORD"
 #define def_MQTT_USERNAME "wpsdevices"
 #define def_MQTT_TOPIC "coordinator"
 #define DEFAULT_FREQ 433.92
