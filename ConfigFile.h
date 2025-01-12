@@ -8,11 +8,11 @@
 #define COORDINATOR_RADIO_TX_POWER 13
 #define def_WPS_LOST_COUNT 3 // ASSUME WPS LOST AFTER NUMBER TRANSMIT COUNTS
 
-#define MAX_WPS_NUMBER 127 // 0, 128 COODINATOR ADDRESLER›
-#define def_INSTALLED_WPS_COUNT 16 //TEST ›«›N 16 OLARAK BEL›RLEND›
+#define MAX_WPS_NUMBER 127 // 0, 128 COODINATOR ADDRESLER√ù
+#define def_INSTALLED_WPS_COUNT 16 //TEST √ù√á√ùN 16 OLARAK BEL√ùRLEND√ù
 
-#define TESTSERVER 	"amc-wps02.amcpro.com.tr"
-#define def_MQTT_PASSWORD "Alp2013er"
+#define TESTSERVER 	"SERVER"
+#define def_MQTT_PASSWORD "PASSWORD"
 #define def_MQTT_USERNAME "wpsdevices"
 #define def_MQTT_TOPIC "coordinator"
 #define def_MQTT_PORT 1883
@@ -23,10 +23,10 @@
 
 // -----------------------------  WPS  DEFAULTS --------------------
 #define def_WPS_ADDRESS 60
-#define WPS_SERIAL 7  //////  SER› NUMARASINA D›KKAT ED›LECEK.... 48bit
+#define WPS_SERIAL 7  //////  SER√ù NUMARASINA D√ùKKAT ED√ùLECEK.... 48bit
 
 
-#define HW_VERSION 6//BUNA DA D›KKAT ED›LECEK. A«IKLAMA AﬁA–IDA
+#define HW_VERSION 6//BUNA DA D√ùKKAT ED√ùLECEK. A√áIKLAMA A√ûA√êIDA
 
 #define SW_VERSION_MAJOR 3
 #define SW_VERSION_MINOR 07
@@ -75,7 +75,7 @@
 
 
 #define WPS_PACKET_LENGHT 32 // PACKET LENGHT FOR WPS PACKET
-// **************************** WPS->COORDINATOR PAKET VER› YAPISI **************************
+// **************************** WPS->COORDINATOR PAKET VER√ù YAPISI **************************
 // 00 - NW ID
 // 01 - FLAG TYPE
 
@@ -84,20 +84,20 @@
 // 02 - SEQUENCE 3rd
 // 03 - SEQUENCE 2nd
 // 04 - SEQUENCE 1st
-// 05 - SENS÷R SICAKLIK MSB
-// 06 - SENS÷R SICAKLIK LSB
-// 07 - P›L SEV›YES› MSB
-// 08 - P›L SEV›YES› LSB
+// 05 - SENS√ñR SICAKLIK MSB
+// 06 - SENS√ñR SICAKLIK LSB
+// 07 - P√ùL SEV√ùYES√ù MSB
+// 08 - P√ùL SEV√ùYES√ù LSB
 // 09 - LAST RSSI FROM WPS SIDE 
 // 10 - ERROR CODE & VEHICLE STATUS
 //			BIT 0 - LSM303C INIT ERROR
 //			BIT 1 - BLUETOOTH ERROR
 //			BIT 2 - LoRA PREVIOUS TRANSMISSION FAILED
-//			BIT 3-6 BOﬁ
+//			BIT 3-6 BO√û
 //			BIT 7 - VEHICLE STATUS
 // 11 - LAST TRANSMISSION RETRY COUNT & VECTOR VARIANCE
 //			BIT 0-3 - LAST TRANSMISSION RETRY COUNT
-//			BIT 4-7	- VEKT÷R SAPMASI
+//			BIT 4-7	- VEKT√ñR SAPMASI
 // 12 - Vector 4th
 // 13 - Vector 3rd
 // 14 - Vector 2nd
@@ -111,7 +111,7 @@
 //			BIT 4-7 - WPS HW VERSION
 // 17 - WPS SW Minor Version
 //			BIT 0-5 - WPS SW MINOR
-//			BIT 6-7 - BOﬁ
+//			BIT 6-7 - BO√û
 // 18 - WPS SERIAL 6th
 // 19 - WPS SERIAL 5th
 // 20 - WPS SERIAL 4th
@@ -163,9 +163,9 @@
 // (LEN-1) - CHECKSUM
 
 
-// **************************** WPS EEPROM VER› YAPISI **************************
+// **************************** WPS EEPROM VER√ù YAPISI **************************
 // 0, NETWORK_ID
-// 1, 1 //1 EEPROM'DAK› VER›LER› KULLAN DEMEK....
+// 1, 1 //1 EEPROM'DAK√ù VER√ùLER√ù KULLAN DEMEK....
 // 2, COORDINATOR_ADDRESS
 // 3, WPS_ADDRESS
 // 4, GAIN
@@ -197,12 +197,12 @@
 // 24, MIN_RSSI_DIFF
 // 25-26-27-28 - Vector0
 // 29 - VarianceOrDiff
-// 30 - InitialState (Sadece Remote Reset iÁin) 
-// 31 - DIFFMULTIPLIER - DIFF «ARPANI (0=x10, 1=x20, 2=x30, 3=40, 4=x50)
+// 30 - InitialState (Sadece Remote Reset i√ßin) 
+// 31 - DIFFMULTIPLIER - DIFF √áARPANI (0=x10, 1=x20, 2=x30, 3=40, 4=x50)
 
 
 #define COORDINATOR_PACKET_LENGHT 16 // PACKET LENGHT FOR REPLY PACKET
-// **************************** COORDINATOR->WPS PAKET VER› YAPISI **************************
+// **************************** COORDINATOR->WPS PAKET VER√ù YAPISI **************************
 // 00 - NETWORK ID
 // 01 - FLAG TYPE 
 #define FLAG_PERIODICAL 1
@@ -223,7 +223,7 @@
 //						BIT 2 = 4 = CHANGE REQUEST
 //						BIT 3 = 8 = InitialState=STATE_BUSY
 //						BIT 4 = 16 = Change WPS address(0), Change NW_ID(1)
-//						BIT 5-7 	BOﬁ
+//						BIT 5-7 	BO√û
 
 // 04 - Change Flag
 //						BIT 0	-	MAG Z,XY,FRQ,VarOrDiff
@@ -284,7 +284,7 @@
 #define GAIN_16 0x60
 
 
-//HMC iÁin tan˝mlamalar
+//HMC i√ßin tan√Ωmlamalar
 
 #define HMC_Address 0x1E
 #define GAIN_088 0x00
